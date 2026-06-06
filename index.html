@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
@@ -41,6 +42,7 @@
     font-size: 14px;
     line-height: 1.6;
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
 
@@ -82,11 +84,12 @@
   }
 
     .logo-badge {
-    width: 64px;
-    height: 64px;
-    background: var(--border);
+    width: 108px;
+    height: 108px;
     border-radius: 50%;
     margin-bottom: 10px;
+    object-fit: cover;
+    display: block;
   }
 
   h1 {
@@ -624,6 +627,10 @@
       position: static;
     }
 
+    .panel {
+      padding: 0;
+    }
+
     .spend-stats-row {
       flex-wrap: wrap;
       gap: 16px;
@@ -638,7 +645,8 @@
     }
 
     nav {
-      flex-wrap: wrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 
@@ -664,7 +672,7 @@
   <!-- PROFILE CARD (sidebar) -->
   <aside class="profile-card">
     <div class="profile-header">
-      <div class="logo-badge"></div>
+      <img class="logo-badge" src="user_data/avatar.png" alt="Trainer avatar">
       <h1 id="stat-username"></h1>
       <div class="profile-sub" id="stat-team"></div>
     </div>
@@ -849,7 +857,7 @@ function populateFromData(DATA) {
   // Profile sidebar
   document.getElementById('stat-username').textContent = a.username;
   const teamEl = document.getElementById('stat-team');
-  teamEl.textContent = 'Team ' + a.team;
+  teamEl.innerHTML = `<i class="fa-solid fa-dove" style="margin-right:6px"></i>Team ` + a.team;
   teamEl.style.color = teamColours[a.team] || 'inherit';
   document.getElementById('stat-level').textContent = a.level;
   document.getElementById('stat-distance').textContent = fmtDec(a.distance_km, 0) + ' km';
