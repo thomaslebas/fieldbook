@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <script src="fieldbook.js"></script>
+<script src="pokedex.js"></script>
 <style>
   :root {
     --bg: #e8f5e9;
@@ -641,13 +642,45 @@
     }
 
     .pokemon-grid {
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
     }
 
     nav {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
+  }
+
+  .pokedex-gen-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 24px 0 10px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .pokedex-gen-header:first-child { padding-top: 0; }
+
+  .pokedex-gen-name {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--text);
+  }
+
+  .pokedex-gen-count {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .pokemon-card--uncaught {
+    background: #fce8e8;
+    border-color: #f0b8b8;
+  }
+  .pokemon-card--uncaught .poke-sprite {
+    filter: brightness(0);
+    opacity: 0.35;
   }
 
   @keyframes fadeUp {
@@ -717,7 +750,7 @@
   <nav>
     <button class="tab active" onclick="showTab('activity')">Activity</button>
     <button class="tab" onclick="showTab('pokedex')">Pokédex</button>
-    <button class="tab" onclick="showTab('pokemon')">Collection</button>
+    <button class="tab" onclick="showTab('pokemon')" style="display:none">Collection</button>
     <button class="tab" onclick="showTab('spending')">Spending</button>
   </nav>
 
@@ -761,8 +794,20 @@
 <div id="pokedex-panel" class="panel">
   <div class="pokemon-search">
     <input type="text" id="dexSearch" placeholder="Search Pokédex..." oninput="filterPokedex()">
+    <select id="dexGenFilter" onchange="filterPokedex()">
+      <option value="all">All generations</option>
+      <option value="1">Kanto (1–151)</option>
+      <option value="2">Johto (152–251)</option>
+      <option value="3">Hoenn (252–386)</option>
+      <option value="4">Sinnoh (387–493)</option>
+      <option value="5">Unova (494–649)</option>
+      <option value="6">Kalos (650–721)</option>
+      <option value="7">Alola (722–809)</option>
+      <option value="8">Galar (810–905)</option>
+      <option value="9">Paldea (906–1025)</option>
+    </select>
   </div>
-  <div class="pokemon-grid" id="dexGrid"></div>
+  <div id="dexGrid"></div>
 </div>
 
 <!-- SPENDING -->
@@ -1217,16 +1262,98 @@ function slugToDisplay(slug) {
 
 let allDex = [];
 
+const GENS = [
+  { name: 'Kanto',  min: 1,   max: 151  },
+  { name: 'Johto',  min: 152, max: 251  },
+  { name: 'Hoenn',  min: 252, max: 386  },
+  { name: 'Sinnoh', min: 387, max: 493  },
+  { name: 'Unova',  min: 494, max: 649  },
+  { name: 'Kalos',  min: 650, max: 721  },
+  { name: 'Alola',  min: 722, max: 809  },
+  { name: 'Galar',  min: 810, max: 905  },
+  { name: 'Paldea', min: 906, max: 1025 },
+];
+
+function getSpriteById(id) {
+  const filename = FORM_ONLY_SPRITES[id] ?? `pm${id}.icon.png`;
+  return `${POGO_SPRITE_BASE}/${filename}`;
+}
+
+function renderDexCard(entry, caught) {
+  const card = document.createElement('div');
+  card.className = 'pokemon-card' + (caught ? '' : ' pokemon-card--uncaught');
+  card.innerHTML = `
+    <img class="poke-sprite" src="${getSpriteById(entry.id)}" alt="${entry.display}" loading="lazy" onerror="this.outerHTML='<div class=\\'poke-sprite-unknown\\'>?</div>'">
+    <div class="poke-name">${entry.display}</div>
+    <div class="poke-num">No. ${String(entry.id).padStart(3, '0')}</div>
+  `;
+  return card;
+}
+
 window.filterPokedex = function filterPokedex() {
   const q = document.getElementById('dexSearch').value.toLowerCase();
-  const filtered = q ? allDex.filter(p => p.display.toLowerCase().includes(q)) : allDex;
-  const grid = document.getElementById('dexGrid');
-  grid.innerHTML = '';
-  const countEl = document.createElement('div');
-  countEl.className = 'pokemon-count-row';
-  countEl.textContent = `${filtered.length} Pokémon`;
-  grid.appendChild(countEl);
-  filtered.forEach(p => grid.appendChild(renderPokeCard(p.display)));
+  const genVal = document.getElementById('dexGenFilter').value;
+  const container = document.getElementById('dexGrid');
+  container.innerHTML = '';
+
+  const dex = window.POKEDEX_DATA || {};
+  const isCaught = slug => dex[slug]?.caught === true;
+
+  const standardDex = allDex.filter(p => p.id >= 1 && p.id <= 1025);
+
+  // Determine which gens to show
+  const activeGens = genVal === 'all' ? GENS : GENS.filter((_, i) => String(i + 1) === genVal);
+
+  // Flatten to entries within selected gen(s), then apply search
+  const genFiltered = standardDex.filter(p => activeGens.some(g => p.id >= g.min && p.id <= g.max));
+  const filtered = q ? genFiltered.filter(p => p.display.toLowerCase().includes(q)) : genFiltered;
+
+  // Single-gen or search: flat grid with a header showing caught count
+  if (genVal !== 'all' || q) {
+    const caughtCount = filtered.filter(p => isCaught(p.slug)).length;
+    if (genVal !== 'all' && !q) {
+      const gen = GENS[parseInt(genVal, 10) - 1];
+      const header = document.createElement('div');
+      header.className = 'pokedex-gen-header';
+      header.innerHTML = `
+        <span class="pokedex-gen-name">${gen.name}</span>
+        <span class="pokedex-gen-count">${caughtCount} / ${filtered.length} caught</span>
+      `;
+      container.appendChild(header);
+    } else {
+      const countEl = document.createElement('div');
+      countEl.className = 'pokemon-count-row';
+      countEl.textContent = q
+        ? `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`
+        : `${caughtCount} / ${filtered.length} caught`;
+      container.appendChild(countEl);
+    }
+    const flatGrid = document.createElement('div');
+    flatGrid.className = 'pokemon-grid';
+    filtered.forEach(p => flatGrid.appendChild(renderDexCard(p, isCaught(p.slug))));
+    container.appendChild(flatGrid);
+    return;
+  }
+
+  // All gens: grouped view with per-gen headers
+  GENS.forEach(gen => {
+    const genEntries = standardDex.filter(p => p.id >= gen.min && p.id <= gen.max);
+    if (genEntries.length === 0) return;
+    const caughtCount = genEntries.filter(p => isCaught(p.slug)).length;
+
+    const header = document.createElement('div');
+    header.className = 'pokedex-gen-header';
+    header.innerHTML = `
+      <span class="pokedex-gen-name">${gen.name}</span>
+      <span class="pokedex-gen-count">${caughtCount} / ${genEntries.length} caught</span>
+    `;
+    container.appendChild(header);
+
+    const subGrid = document.createElement('div');
+    subGrid.className = 'pokemon-grid';
+    genEntries.forEach(p => subGrid.appendChild(renderDexCard(p, isCaught(p.slug))));
+    container.appendChild(subGrid);
+  });
 };
 
 async function buildPokeMap() {
