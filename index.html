@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TULB / Pokemon Go Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<style>
+  :root {
+    --bg: #e8f5e9;
+    --surface: #ffffff;
+    --surface2: #f0faf0;
+    --border: #d4ecd4;
+    --blue: #1a7a6e;
+    --blue-dark: #125c54;
+    --yellow: #ffcb05;
+    --yellow-dark: #e6b800;
+    --red: #cc0000;
+    --teal: #1a7a6e;
+    --text: #1a3a2e;
+    --muted: #6a8f8a;
+    --shadow: 0 2px 12px rgba(26,122,110,0.08);
+    --shadow-hover: 0 4px 20px rgba(26,122,110,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: linear-gradient(135deg, #f4fbf4 0%, #c8eec8 50%, #a0d8a0 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+
+  /* LAYOUT */
+  .app-container {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      ".       tabs"
+      "profile content";
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+    gap: 0 24px;
+  }
+
+  /* PROFILE CARD */
+  .profile-card {
+    grid-area: profile;
+    align-self: start;
+    position: sticky;
+    top: 94px;
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+  }
+
+    .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-bottom: 16px;
+  }
+
+    .logo-badge {
+    width: 64px;
+    height: 64px;
+    background: var(--border);
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: 'Lato', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+    .profile-sub {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 4px;
+  }
+
+        .profile-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+    .meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .meta-row strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+        .profile-divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+    .profile-section-label {
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+
+      .profile-stat {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .profile-stat:last-of-type { border-bottom: none; }
+
+    .profile-stat-label {
+    font-size: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+    .profile-stat-value {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+    .profile-stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* CONTENT AREA */
+  .content-area {
+    grid-area: content;
+  }
+
+  /* NAV TABS */
+  nav {
+    grid-area: tabs;
+    display: flex;
+    justify-content: center;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .tab {
+    padding: 14px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'Lato', sans-serif;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* PANELS */
+  .panel { display: none; padding: 24px; }
+  .panel.active { display: block; }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* CHART CARDS */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+
+
+
+  .chart-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+
+  .chart-sub {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  canvas { width: 100% !important; }
+
+  /* MAP STATS STRIP */
+  .map-stats-strip {
+    display: flex;
+    gap: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .map-stat {
+    flex: 1;
+    padding: 14px 16px;
+    border-right: 1px solid var(--border);
+  }
+  .map-stat:last-child { border-right: none; }
+
+  .map-stat-label {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .map-stat-value {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--text);
+  }
+
+  /* MAP */
+  #map {
+    height: 400px;
+    background: var(--surface);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    outline: none;
+  }
+
+  .leaflet-container {
+    outline: none;
+  }
+
+  .leaflet-tile-pane {
+    filter: saturate(0.55) brightness(1.08);
+  }
+
+  .map-legend {
+    display: flex;
+    gap: 24px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  /* POKEMON GRID */
+  .pokemon-search {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 0 0 12px;
+  }
+
+  .pokemon-search input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 16px;
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    flex: 1;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .pokemon-search input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,122,110,0.12); }
+  .pokemon-search input::placeholder { color: var(--muted); }
+
+  .pokemon-count {
+    font-size: 14px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .pokemon-count-row {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    padding: 4px 0 12px;
+  }
+
+  .pokemon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .pokemon-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: default;
+  }
+
+  .pokemon-card:hover { border-color: var(--blue); box-shadow: var(--shadow-hover); }
+
+  .xp-bar-block {
+    padding: 8px 0 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .xp-bar-top {
+    margin-bottom: 6px;
+  }
+
+  .xp-level {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .xp-bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    background: var(--blue);
+    border-radius: 3px;
+    max-width: 100%;
+  }
+
+  .xp-bar-bottom {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+  .xp-fraction {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+        .profile-data-as-of {
+    font-size: 14px;
+    color: var(--muted);
+    padding-top: 12px;
+  }
+
+  .poke-sprite {
+    width: 72px;
+    height: 96px;
+    background: var(--surface2);
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .poke-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .poke-num {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .spend-chart-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .spend-chart-block {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .spend-chart-total {
+    flex-shrink: 0;
+    width: 110px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: left;
+  }
+
+  .spend-chart-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  /* SPENDING */
+  .spend-currency-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .spend-currency-row:last-child { margin-bottom: 0; }
+
+  .spend-currency-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .spend-currency-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .spend-currency-bar {
+    height: 100%;
+    background: var(--blue);
+    border-radius: 3px;
+  }
+
+  .spend-currency-amount {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--text);
+    width: 72px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .spend-economy-main {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .spend-economy-row {
+    display: flex;
+    gap: 0;
+  }
+
+  .spend-economy-cell {
+    flex: 1;
+  }
+
+  .spend-economy-divider {
+    width: 1px;
+    background: var(--border);
+    margin: 0 16px;
+  }
+
+  .spend-economy-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.2;
+    margin-top: 4px;
+  }
+
+  .spend-stats-row {
+    display: flex;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+
+  .spend-stat {
+    flex: 1;
+    min-width: 120px;
+    padding: 4px 20px 4px 0;
+    border-right: 1px solid var(--border);
+    margin-right: 20px;
+  }
+  .spend-stat:last-child { border-right: none; margin-right: 0; }
+
+  .spend-total {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.2;
+    margin: 4px 0 2px;
+    word-break: break-word;
+  }
+
+  .spend-highlight {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+    margin: 4px 0 2px;
+  }
+
+  /* ACTIVITY NOTE */
+  .activity-note {
+    background: var(--surface2);
+    border-left: 4px solid var(--blue);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 800px) {
+    .app-container {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto 1fr;
+      grid-template-areas:
+        "profile"
+        "tabs"
+        "content";
+      padding: 16px;
+      gap: 16px 0;
+    }
+
+    .profile-card {
+      width: 100%;
+      position: static;
+    }
+
+    .spend-stats-row {
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .spend-stat {
+      min-width: calc(50% - 16px);
+    }
+
+    .pokemon-grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    nav {
+      flex-wrap: wrap;
+    }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel.active > * {
+    animation: fadeUp 0.35s ease both;
+  }
+
+  .panel.active > *:nth-child(2) { animation-delay: 0.05s; }
+  .panel.active > *:nth-child(3) { animation-delay: 0.1s; }
+  .panel.active > *:nth-child(4) { animation-delay: 0.15s; }
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- PROFILE CARD (sidebar) -->
+  <aside class="profile-card">
+    <div class="profile-header">
+      <div class="logo-badge"></div>
+      <h1>Tulb</h1>
+      <div class="profile-sub" style="color:#cc0000;">Team Valor</div>
+    </div>
+
+    <div class="profile-divider"></div>
+
+    <div class="profile-stat">
+      <div class="profile-stat-label">Level</div>
+      <div class="profile-stat-value">61</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-label">Pokédex</div>
+      <div class="profile-stat-value">931</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-label">Distance walked</div>
+      <div class="profile-stat-value">13,724 km</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-label">Encounters</div>
+      <div class="profile-stat-value">10,782</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-label">Pokestop spins</div>
+      <div class="profile-stat-value">15,690</div>
+    </div>
+
+    <div class="profile-meta">
+      <div class="meta-row"><span>Started</span><strong>07 Jun 2016</strong></div>
+      <div class="meta-row"><span>XP</span><strong>38,631,929</strong></div>
+      <div class="meta-row"><span>Stardust</span><strong>2,410,210</strong></div>
+      <div class="meta-row"><span>Collection</span><strong>1,110</strong></div>
+    </div>
+
+    <div class="profile-divider"></div>
+
+    <div class="profile-data-as-of">Data as of Dec 2025</div>
+
+  </aside>
+
+  <!-- NAV TABS -->
+  <nav>
+    <button class="tab active" onclick="showTab('activity')">Activity</button>
+    <button class="tab" onclick="showTab('pokemon')">Collection</button>
+    <button class="tab" onclick="showTab('pokedex')">Pokédex</button>
+    <button class="tab" onclick="showTab('spending')">Spending</button>
+  </nav>
+
+  <!-- CONTENT AREA -->
+  <div class="content-area">
+
+<!-- ACTIVITY -->
+<div id="activity" class="panel active">
+  <div class="chart-card" style="margin-bottom:20px; padding-bottom:0;">
+    <div class="chart-title">Encounter Locations</div>
+    <div class="chart-sub">269 unique locations &middot; 10,782 encounters &middot; Dec 2022 &ndash; Dec 2025</div>
+    <div id="map" style="margin: 0 -24px;"></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card full">
+      <div class="chart-title">Monthly Pokemon Encounters</div>
+      <div class="chart-sub">Wild encounters per month across all locations</div>
+      <canvas id="encChart" height="200"></canvas>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-title">Pokestop Spins</div>
+      <div class="chart-sub">Monthly spin volume</div>
+      <canvas id="spinChart" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- POKEMON -->
+<div id="pokemon-panel" class="panel">
+  <div class="pokemon-search">
+    <input type="text" id="pokeSearch" placeholder="Search your collection..." oninput="filterPokemon()">
+  </div>
+  <div class="pokemon-grid" id="pokeGrid"></div>
+</div>
+
+<!-- POKEDEX -->
+<div id="pokedex-panel" class="panel">
+</div>
+
+<!-- SPENDING -->
+<div id="spending-panel" class="panel">
+
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="spend-stats-row">
+      <div class="spend-stat">
+        <div class="profile-stat-label">NZD</div>
+        <div class="spend-highlight">$158.07</div>
+      </div>
+      <div class="spend-stat">
+        <div class="profile-stat-label">CAD</div>
+        <div class="spend-highlight">$90.71</div>
+      </div>
+      <div class="spend-stat">
+        <div class="profile-stat-label">GBP</div>
+        <div class="spend-highlight">£1.98</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="spend-stats-row">
+      <div class="spend-stat">
+        <div class="profile-stat-label">Items purchased</div>
+        <div class="spend-highlight">541</div>
+      </div>
+      <div class="spend-stat">
+        <div class="profile-stat-label">Coin top-ups</div>
+        <div class="spend-highlight">94</div>
+      </div>
+      <div class="spend-stat">
+        <div class="profile-stat-label">Coin spends</div>
+        <div class="spend-highlight">291</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">New Zealand Dollar</div>
+    <canvas id="spendNZD" height="120"></canvas>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">Canadian Dollar</div>
+    <canvas id="spendCAD" height="120"></canvas>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">British Pound</div>
+    <canvas id="spendGBP" height="120"></canvas>
+  </div>
+
+</div>
+
+<script>
+const DATA = {"stats": {"start_date": "07/06/2016", "level": "61", "xp": 38631929, "pokecoins": 420, "stardust": 2410210, "distance_km": 13723.975586, "buddy": "V0837_POKEMON_ROLYCOLY"}, "pokemon_count": 1110, "pokemon_list": ["Roselia", "Skiploom", "Chimecho", "Typhlosion", "Victreebel", "Dugtrio", "Fidough", "Pikachu", "Magikarp", "Smoochum", "Nacli", "Omanyte", "Rattata", "Elgyem", "Steenee", "Charjabug", "Durant", "Snivy", "Cherubi", "Pikachu", "Wormadam", "Burmy", "Wingull", "Sawk", "Ponyta", "Cyndaquil", "Uxie", "Samurott", "Snorunt", "Gengar", "Drilbur", "Wooloo", "Eelektrik", "Armaldo", "Sandslash", "Pawniard", "Stufful", "Jolteon", "Sandile", "Torchic", "Pikachu", "Entei", "Skuntank", "Togekiss", "Pikachu", "Marowak", "Pikachu", "Cryogonal", "Charjabug", "Machamp", "Pyroar", "Pichu", "Slowking", "Drampa", "Registeel", "Accelgor", "Machop", "Buzzwole", "Axew", "Florges", "Snorlax", "Munna", "Stantler", "Cubone", "Krookodile", "Bronzong", "Cyndaquil", "Linoone", "Shelgon", "Sneasler", "Slakoth", "Barbaracle", "Minun", "Scrafty", "Pikachu", "Pikachu", "Spinda", "Sawsbuck", "Nuzleaf", "Hariyama", "Exeggutor", "Frigibax", "Druddigon", "Torterra", "Clodsire", "Duosion", "Applin", "Toxel", "Chatot", "Cutiefly", "Pheromosa", "Quilava", "Maushold", "Maractus", "Quagsire", "Piplup", "Quagsire", "Illumise", "Toxapex", "Pikachu", "Pikachu", "Polteageist", "Wooper", "Meganium", "Durant", "Relicanth", "Cascoon", "Charmander", "Pikachu", "Chansey", "Drakloak", "Eevee", "Torkoal", "Rattata", "Dewott", "Chingling", "Steenee", "Shaymin", "Combusken", "Cinccino", "Herdier", "Primeape", "Shelmet", "Eevee", "Charizard", "Exeggutor", "Charcadet", "Muk", "Celesteela", "Baxcalibur", "Porygon2", "Froakie", "Grimer", "Quaxwell", "Deerling", "Vaporeon", "Omanyte", "Unown", "Greninja", "Porygon Z", "Magnemite", "Alomomola", "Ferrothorn", "Drilbur", "Hattrem", "Celebi", "Pikachu", "Zangoose", "Geodude", "Plusle", "Palossand", "Spinda", "Lotad", "Rhyhorn", "Gastly", "Poliwag", "Florges", "Corphish", "Ho-oh", "Doduo", "Corsola", "Litten", "Jangmo O", "Pinsir", "Hatenna", "Cranidos", "Wobbuffet", "Feraligatr", "Necrozma", "Chansey", "Squirtle", "Sunkern", "Flabebe", "Sandshrew", "Clamperl", "Trumbeak", "Trubbish", "Pachirisu", "Tangela", "Heracross", "Meloetta", "Unown", "Swampert", "Tynamo", "Pikachu", "Pansear", "Buneary", "Wartortle", "Seviper", "Sableye", "Wiglett", "Tauros", "Nihilego", "Froakie", "Greavard", "Grovyle", "Bellossom", "Oricorio", "Bergmite", "Sudowoodo", "Bewear", "Wiglett", "Oshawott", "Toxtricity", "Corviknight", "Riolu", "Pikachu", "Pidgeot", "Noibat", "Aerodactyl", "Klink", "Scyther", "Beldum", "Fraxure", "Electabuzz", "Conkeldurr", "Venusaur", "Snorlax", "Braviary", "Ludicolo", "Croagunk", "Persian", "Exeggutor", "Pangoro", "Bounsweet", "Pikachu", "Tandemaus", "Haunter", "Slowpoke", "Fuecoco", "Togetic", "Squirtle", "Slowpoke", "Malamar", "Frillish", "Dragonite", "Monferno", "Wingull", "Typhlosion", "Pichu", "Aggron", "Horsea", "Umbreon", "Tepig", "Electrode", "Linoone", "Bonsly", "Luxray", "Latios", "Pikipek", "Deoxys", "Breloom", "Machoke", "Nacli", "Larvesta", "Ducklett", "Unown", "Cinderace", "Espeon", "Frigibax", "Tyranitar", "Wooper", "Swablu", "Dachsbun", "Bastiodon", "Magnezone", "Dubwool", "Nidoking", "Deino", "Snorlax", "Trevenant", "Scraggy", "Gabite", "Togepi", "Hatterene", "Absol", "Charmeleon", "Jolteon", "Lopunny", "Klefki", "Blacephalon", "Sizzlipede", "Unown", "Haxorus", "Flabebe", "Relicanth", "Pichu", "Lokix", "Regirock", "Pancham", "Kubfu", "Yveltal", "Dragonair", "Snivy", "Unown", "Eldegoss", "Electabuzz", "Guzzlord", "Claydol", "Kricketot", "Pansage", "Unown", "Dragalge", "Miltank", "Greedent", "Prinplup", "Vanillite", "Drilbur", "Shellder", "Tinkatink", "Pikachu", "Chandelure", "Monferno", "Bouffalant", "Carnivine", "Blastoise", "Basculin", "Feraligatr", "Larvesta", "Drowzee", "Voltorb", "Dragonite", "Rillaboom", "Binacle", "Abra", "Garchomp", "Meditite", "Zigzagoon", "Pikachu", "Excadrill", "Flabebe", "Yamask", "Reshiram", "Croconaw", "Scizor", "Cofagrigus", "Swablu", "Necrozma", "Charmander", "Castform", "Unown", "Metang", "Tatsugiri", "Pawniard", "Machop", "Sneasel", "Spinda", "Banette", "Tauros", "Cresselia", "Illumise", "Jolteon", "Turtonator", "Steelix", "Heracross", "Jirachi", "Wooloo", "Vivillon", "Mewtwo", "Unown", "Cubchoo", "Necrozma", "Unown", "Gastrodon", "Whiscash", "Kadabra", "Kyogre", "Hawlucha", "Buzzwole", "Machop", "Talonflame", "Applin", "Inteleon", "Zapdos", "Incineroar", "Natu", "Squirtle", "Forretress", "Relicanth", "Pikachu", "Loudred", "Yungoos", "Dolliv", "Shedinja", "Turtwig", "Quaxwell", "Swanna", "Slakoth", "Palkia", "Pupitar", "Vaporeon", "Whimsicott", "Slaking", "Spritzee", "Gallade", "Reshiram", "Snom", "Sewaddle", "Seel", "Donphan", "Lampent", "Hakamo O", "Togetic", "Woobat", "Naganadel", "Relicanth", "Golem", "Crawdaunt", "Terrakion", "Samurott", "Bagon", "Cacturne", "Vivillon", "Oricorio", "Staraptor", "Blacephalon", "Crocalor", "Bouffalant", "Toedscool", "Jynx", "Steelix", "Onix", "Chatot", "Wooloo", "Decidueye", "Pikachu", "Pinsir", "Basculin", "Jigglypuff", "Aegislash", "Seaking", "Duosion", "Raticate", "Xerneas", "Simipour", "Landorus", "Squirtle", "Vaporeon", "Quagsire", "Pikachu", "Panpour", "Exeggutor", "Ralts", "Kyurem", "Melmetal", "Gourgeist", "Greninja", "Tropius", "Gothorita", "Torchic", "Anorith", "Aerodactyl", "Shuckle", "Passimian", "Vivillon", "Dudunsparce", "Wyrdeer", "Jumpluff", "Gengar", "Archeops", "Slowpoke", "Watchog", "Goomy", "Hatenna", "Eelektrik", "Bagon", "Tauros", "Sigilyph", "Oricorio", "Rhydon", "Empoleon", "Groudon", "Hippowdon", "Swalot", "Fearow", "Drizzile", "Klink", "Gligar", "Wailmer", "Thundurus", "Gyarados", "Landorus", "Vivillon", "Pikachu", "Volbeat", "Meltan", "Maractus", "Tangrowth", "Stunfisk", "Cryogonal", "Sinistea", "Carbink", "Quaquaval", "Golem", "Vivillon", "Pikachu", "Elekid", "Klefki", "Pikachu", "Pikachu", "Drifloon", "Infernape", "Lileep", "Gorebyss", "Stonjourner", "Wooper", "Porygon", "Nidorino", "Salamence", "Stunfisk", "Heracross", "Alakazam", "Grotle", "Lucario", "Mandibuzz", "Pikachu", "Applin", "Pumpkaboo", "Giratina", "Zangoose", "Sandslash", "Buzzwole", "Squirtle", "Bouffalant", "Dedenne", "Smoochum", "Wobbuffet", "Gothitelle", "Relicanth", "Porygon2", "Lapras", "Metagross", "Guzzlord", "Araquanid", "Kangaskhan", "Chansey", "Vivillon", "Helioptile", "Pichu", "Eelektross", "Sobble", "Bonsly", "Vaporeon", "Butterfree", "Mime Jr", "Salandit", "Fuecoco", "Illumise", "Kommo O", "Joltik", "Snorlax", "Furfrou", "Squirtle", "Leafeon", "Zigzagoon", "Tadbulb", "Hakamo O", "Feebas", "Tynamo", "Nihilego", "Pyroar", "Diglett", "Grimer", "Floette", "Gourgeist", "Cloyster", "Arcanine", "Nihilego", "Ursaluna", "Mr Rime", "Ledyba", "Furfrou", "Solosis", "Tornadus", "Blaziken", "Chespin", "Granbull", "Mesprit", "Blitzle", "Stufful", "Oricorio", "Glaceon", "Tsareena", "Vivillon", "Exeggutor", "Aggron", "Goodra", "Zarude", "Nidoqueen", "Charcadet", "Spiritomb", "Goomy", "Pelipper", "Chespin", "Clefairy", "Sharpedo", "Bellsprout", "Cobalion", "Mienfoo", "Jolteon", "Applin", "Pikachu", "Indeedee", "Exeggutor", "Walrein", "Unown", "Fletchling", "Dondozo", "Spinda", "Vaporeon", "Heatran", "Dubwool", "Dodrio", "Mr. Mime", "Pikachu", "Stonjourner", "Tapu Bulu", "Rockruff", "Leafeon", "Palpitoad", "Timburr", "Medicham", "Metapod", "Baltoy", "Larvesta", "Perrserker", "Wurmple", "Slowking", "Cubone", "Sprigatito", "Rampardos", "Pidgeotto", "Genesect", "Ninjask", "Snom", "Zweilous", "Stufful", "Lairon", "Girafarig", "Cyndaquil", "Butterfree", "Nihilego", "Garbodor", "Zygarde", "Growlithe", "Chatot", "Wormadam", "Panpour", "Shellder", "Exeggutor", "Ralts", "Dartrix", "Spinarak", "Spoink", "Pikachu", "Tarountula", "Exeggutor", "Stonjourner", "Espeon", "Mantine", "Drifblim", "Shiinotic", "Charizard", "Mudkip", "Frillish", "Tauros", "Dunsparce", "Leafeon", "Fuecoco", "Necrozma", "Salamence", "Honchkrow", "Dratini", "Pikachu", "Dusknoir", "Unown", "Girafarig", "Cyndaquil", "Infernape", "Gigalith", "Skwovet", "Pansage", "Azurill", "Oricorio", "Wailmer", "Diggersby", "Skwovet", "Dialga", "Electivire", "Starmie", "Floette", "Buzzwole", "Weavile", "Skeledirge", "Wailmer", "Unown", "Rookidee", "Oinkologne", "Sceptile", "Rolycoly", "Diglett", "Dugtrio", "Terrakion", "Crobat", "Vivillon", "Darumaka", "Spinda", "Noibat", "Rapidash", "Makuhita", "Dustox", "Lycanroc", "Excadrill", "Finneon", "Butterfree", "Jolteon", "Torkoal", "Samurott", "Sudowoodo", "Victreebel", "Solgaleo", "Vivillon", "Duskull", "Luxray", "Granbull", "Relicanth", "Mew", "Florges", "Wugtrio", "Klinklang", "Tinkaton", "Hydreigon", "Sylveon", "Braixen", "Frogadier", "Grubbin", "Kecleon", "Morelull", "Tatsugiri", "Lunatone", "Vivillon", "Suicune", "Gholdengo", "Wigglytuff", "Musharna", "Audino", "Tapu Lele", "Pichu", "Larvesta", "Regigigas", "Rotom", "Skarmory", "Teddiursa", "Muk", "Minccino", "Floette", "Zapdos", "Pikachu", "Applin", "Archen", "Kirlia", "Ponyta", "Annihilape", "Ditto", "Kartana", "Pikachu", "Slowpoke", "Slowpoke", "Unown", "Gastly", "Snorlax", "Azumarill", "Lickilicky", "Tyranitar", "Florges", "Mr. Mime", "Cyndaquil", "Klefki", "Golett", "Eevee", "Venusaur", "Pikachu", "Rotom", "Mismagius", "Thundurus", "Vikavolt", "Raikou", "Pikachu", "Voltorb", "Wynaut", "Mareep", "Fletchling", "Virizion", "Slowking", "Gardevoir", "Pikachu", "Nihilego", "Gengar", "Glaceon", "Eevee", "Dusclops", "Torracat", "Spheal", "Zorua", "Ponyta", "Eevee", "Leavanny", "Beautifly", "Meowstic", "Frogadier", "Unown", "Flabebe", "Paras", "Muk", "Falinks", "Blaziken", "Squirtle", "Snivy", "Purrloin", "Fennekin", "Skiddo", "Unown", "Mew", "Golisopod", "Vaporeon", "Staravia", "Oricorio", "Talonflame", "Greninja", "Panpour", "Numel", "Nihilego", "Dedenne", "Aggron", "Sigilyph", "Charmander", "Boldore", "Oricorio", "Maractus", "Electabuzz", "Clawitzer", "Rowlet", "Venonat", "Genesect", "Pikachu", "Magikarp", "Mewtwo", "Cranidos", "Pheromosa", "Raticate", "Metagross", "Bellsprout", "Clobbopus", "Pikachu", "Lanturn", "Salandit", "Landorus", "Gliscor", "Metagross", "Roggenrola", "Bisharp", "Lickilicky", "Decidueye", "Nidorino", "Panpour", "Houndstone", "Floatzel", "Hoppip", "Turtwig", "Raichu", "Flabebe", "Applin", "Piplup", "Scorbunny", "Celesteela", "Gligar", "Wooper", "Poltchageist", "Kecleon", "Voltorb", "Raichu", "Conkeldurr", "Bruxish", "Cottonee", "Wigglytuff", "Darmanitan", "Charizard", "Grimer", "Croagunk", "Sceptile", "Stufful", "Klefki", "Murkrow", "Jellicent", "Grookey", "Meowscarada", "Chesnaught", "Charcadet", "Togekiss", "Venusaur", "Turtwig", "Dratini", "Miltank", "Glameow", "Unfezant", "Lickitung", "Ferroseed", "Sandshrew", "Emolga", "Machamp", "Salazzle", "Grapploct", "Mr. Mime", "Xurkitree", "Grookey", "Gastly", "Munchlax", "Egg 1: 0 / 2.0 km", "Egg 2: 0 / 2.0 km", "Egg 3: 0 / 2.0 km", "Egg 4: 0 / 2.0 km", "Egg 5: 0 / 2.0 km", "Egg 6: 0 / 2.0 km", "Egg 7: 0 / 5.0 km", "Egg 8: 0 / 5.0 km", "Egg 9: 0 / 5.0 km", "Egg 10: 0 / 2.0 km", "Egg 11: 0 / 2.0 km", "Egg 12: in incubator - 4.65 / 10.0 km", "Egg 13: in incubator - 0 / 1.0 km", "ITEM_INCUBATOR_SPECIAL: 1", "Egg incubator (unlimited use): 1", "Super incubator: 0", "Egg incubator: 0", "ITEM_EVENT_PASS_POINT_GO_FEST_02: 60", "ITEM_EVENT_PASS_POINT_GO_FEST_01: 6880", "ITEM_OTHER_EVOLUTION_STONE_MAPLE_C: 10", "ITEM_EVENT_PASS_POINT_GO_TOUR_01: 630", "ITEM_RESOURCE_CROWNED_ZACIAN: 50", "ITEM_RESOURCE_CROWNED_ZAMAZENTA: 50", "ITEM_OTHER_EVOLUTION_STONE_MAPLE_A: 9", "ITEM_OTHER_EVOLUTION_STONE_MAPLE_B: 15", "Lucky egg: 18", "ITEM_OTHER_EVOLUTION_STONE_A: 13", "ITEM_MAX_BOOST: 2", "ITEM_WILD_BALL: 0", "Master balls: 0", "ITEM_REMOTE_RAID_TICKET: 0", "Raid pass (paid): 18", "Star pieces: 4", "ITEM_EVENT_PASS_POINT_LIVE_OPS_02: 4005", "ITEM_EVENT_PASS_POINT_LIVE_OPS_03: 4080", "ITEM_INCENSE_DAILY_ADVENTURE: 1", "ITEM_MOVE_REROLL_OTHER_SPECIAL_ATTACK_A: 2", "Incense: 24", "Hyper potion: 3", "Max potion: 269", "ITEM_MP: 3340", "ITEM_MP_REPLENISH: 1", "ITEM_SHADOW_GEM_FRAGMENT: 0", "ITEM_SHADOW_GEM: 20", "ITEM_LEADER_MAP: 8", "ITEM_GIOVANNI_MAP: 5", "ITEM_LEADER_MAP_FRAGMENT: 0", "ITEM_BEANS: 3", "ITEM_BREAKFAST: 1", "ITEM_MOVE_REROLL_ELITE_SPECIAL_ATTACK: 3", "Charged TM: 19", "ITEM_MOVE_REROLL_ELITE_FAST_ATTACK: 2", "ITEM_EVENT_PASS_POINT_GO_WILD_AREA_01: 637", "Revive: 3", "ITEM_EVENT_TICKET_GRAY_TO_GIFT: 0", "ITEM_EVERGREEN_TICKET: 0", "ITEM_GLOBAL_EVENT_TICKET_TO_GIFT: 0", "ITEM_EVENT_TICKET_PINK_TO_GIFT: 0", "ITEM_EVENT_TICKET_PINK: 0", "ITEM_EVENT_TICKET_GRAY: 0", "ITEM_GLOBAL_EVENT_TICKET: 0", "Rare candy: 0", "ITEM_XL_RARE_CANDY: 2", "ITEM_POFFIN: 8", "Golden razz berry: 107", "Nanab berry: 7", "Razz berry: 87", "Raid pass: 0", "ITEM_GEN5_EVOLUTION_STONE: 5", "Up-grade: 5", "Dragon scale: 5", "ITEM_GEN4_EVOLUTION_STONE: 5", "King's rock: 5", "Metal coat: 5", "Sun stone: 5", "ITEM_TROY_DISK_SPARKLY: 0", "FUSION_RESOURCE_BLACK_KYUREM: 25", "ITEM_TROY_DISK_MAGNETIC: 3", "FUSION_RESOURCE_WHITE_KYUREM: 25", "ITEM_TROY_DISK_RAINY: 1", "ITEM_TROY_DISK_GLACIAL: 5", "FUSION_RESOURCE_DUSKMANE_NECROZMA: 1100", "FUSION_RESOURCE_DAWNWINGS_NECROZMA: 200", "Lure: 18", "ITEM_EVENT_TICKET_05_TO_GIFT: 0", "ITEM_EVENT_TICKET_10: 0", "ITEM_EVENT_TICKET_07: 0", "ITEM_EVENT_TICKET_05: 0", "ITEM_EVENT_TICKET_02: 0", "ITEM_EVENT_TICKET_04: 0", "Max revive: 153", "ITEM_GOLDEN_PINAP_BERRY: 99", "Potion: 11", "ITEM_EVENT_PASS_POINT_LIVE_OPS_01: 5860", "ITEM_TROY_DISK_MOSSY: 2", "Great balls: 280", "ITEM_EVENT_PASS_POINT_LIVE_OPS_04: 2505", "Super potion: 16", "Fast TM: 21", "Poke balls: 37", "Pinap berry: 159", "Ultra balls: 237", "Badge: km walked: : 4", "Badge: Catch X Psychic-type Pokemon. where X is : 3", "Badge: Catch X Ghost-type Pokemon. where X is : 3", "Badge: Hatch X Eggs. where X is : 4", "Badge: Register X Kanto region Pokemon in the Pokedex. where X is : 4", "Badge: Evolve X Pokemon. where X is : 3", "Badge: Catch X tiny Rattata. where X is : 1", "Badge: Catch X Ice-type Pokemon. where X is : 3", "Badge: Win X Gym battles. where X is : 2", "Badge: Catch X Fighting-type Pokemon. where X is : 3", "Badge: Visit X PokeStops. where X is : 3", "Badge: Catch X Grass-type Pokemon. where X is : 4", "Badge: Catch X Dragon-type Pokemon. where X is : 3", "Badge: Catch X Pokemon. where X is : 3", "Badge: Catch X Fairy-type Pokemon. where X is : 3", "Badge: Catch X Bug-type Pokemon. where X is : 3", "Badge: Catch X big Magikarp. where X is : 2", "Badge: Catch X Normal-type Pokemon. where X is : 4", "Badge: Catch X Ground-type Pokemon. where X is : 3", "Badge: Catch X Rock-type Pokemon. where X is : 3", "Badge: Catch X Dark-type Pokemon. where X is : 3", "Badge: Catch X Electric-type Pokemon. where X is : 3", "Badge: Catch X Flying-type Pokemon. where X is : 4", "Badge: Catch X Steel-type Pokemon. where X is : 3", "Badge: Catch X Pikachu. where X is : 3", "Badge: Catch X Fire-type Pokemon. where X is : 3", "Badge: Catch X Water-type Pokemon. where X is : 4", "Badge: Train X times. where X is : 1", "Badge: Catch X Poison-type Pokemon. where X is : 4", "Badge: Register X Pokemon first discovered in the Johto region to the Pokedex. where X is : 4", "Badge: Catch X Unown. where X is : 2", "Badge: berries fed: : 2", "Badge: raid battles won: : 2", "Badge: hours defended: : 3", "Badge: Win X Legendary Raids. where X is : 2", "Badge: Register X Pokemon first discovered in the Hoenn region to the Pokedex. where X is : 4", "Badge: challenge quests: : 3", "BADGE_MAX_LEVEL_FRIENDS: 4", "BADGE_TRADING_DISTANCE: 2", "BADGE_TRADING: 2", "BADGE_POKEDEX_ENTRIES_GEN4: 3", "BADGE_ULTRA_LEAGUE: 1", "BADGE_GREAT_LEAGUE: 2", "BADGE_MASTER_LEAGUE: 1", "BADGE_PHOTOBOMB: 1", "BADGE_ROCKET_GRUNTS_DEFEATED: 2", "BADGE_POKEMON_PURIFIED: 2", "BADGE_POKEDEX_ENTRIES_GEN5: 3", "BADGE_GLOBAL_TICKETED_EVENT: 1", "BADGE_ROCKET_GIOVANNI_DEFEATED: 2", "BADGE_EVENT_0002: 1", "BADGE_EVENT_0001: 1", "BADGE_GOFEST_2020_GLOBAL: 1", "BADGE_UNIQUE_MEGA_EVOS: 1", "BADGE_TOTAL_MEGA_EVOS: 1", "BADGE_POKEDEX_ENTRIES_GEN6: 4", "Badge: Visit X unique PokeStops. where X is : 4", "BADGE_7_DAY_STREAKS: 4", "BADGE_RAIDS_WITH_FRIENDS: 1", "BADGE_POKEMON_CAUGHT_AT_YOUR_LURES: 2", "BADGE_UNIQUE_RAID_BOSSES_DEFEATED: 4", "BADGE_EVENT_0017: 1", "BADGE_MINI_COLLECTION: 68", "BADGE_RAID_BATTLE_STAT: 2", "BADGE_GOFEST_2021_GLOBAL: 1", "BADGE_POKEDEX_ENTRIES_GEN8: 3", "BADGE_POKEDEX_ENTRIES_GEN7: 3", "BADGE_GOFEST_2022_GLOBAL: 1", "BADGE_POKEDEX_ENTRIES_GEN8A: 3", "BADGE_EVENT_0162: 1", "BADGE_CAPTURE_LARGE_POKEMON: 2", "BADGE_CAPTURE_SMALL_POKEMON: 2", "BADGE_BUTTERFLY_COLLECTOR: 4", "BADGE_GOTOUR_2023_SAPPHIRE_GLOBAL: 1", "BADGE_MAX_SIZE_FIRST_PLACE_WIN: 1", "BADGE_GOFEST_2023_GLOBAL: 1", "BADGE_POKEDEX_ENTRIES_GEN9: 2", "BADGE_GOTOUR_2024_PEARL: 1", "BADGE_GOTOUR_2024_SECRET_00: 1", "BADGE_GOFEST_2024_NEWYORK_DAY1_CITY: 1", "BADGE_GOFEST_2024_NEWYORK_DAY1_EXTENDED: 1", "BADGE_GOFEST_2024_NEWYORK_DAY2_PARK_AFTERNOON: 1", "BADGE_GOFEST_2024_NEWYORK_DAY2_EXTENDED: 1", "BADGE_GOFEST_2024_NEWYORK_DAY2_CITY: 1", "BADGE_EVENT_0093: 1", "BADGE_PARTY_CHALLENGES_COMPLETED: 1", "BADGE_GO_TOUR_2025_GLOBAL_BLACK_VERSION: 1", "BADGE_GOFEST_2025_GLOBAL: 1", "BADGE_SMORES_00: 42", "BADGE_WEEKLY_CHALLENGE_ELIGIBLE: 1", "BADGE_BEST_FRIENDS_PLUS_ELIGIBLE: 1"], "monthly_encounters": [{"year_month": "2022-12", "count": 3}, {"year_month": "2023-01", "count": 109}, {"year_month": "2023-02", "count": 148}, {"year_month": "2023-03", "count": 208}, {"year_month": "2023-04", "count": 192}, {"year_month": "2023-05", "count": 99}, {"year_month": "2023-06", "count": 191}, {"year_month": "2023-07", "count": 294}, {"year_month": "2023-08", "count": 399}, {"year_month": "2023-09", "count": 584}, {"year_month": "2023-10", "count": 536}, {"year_month": "2023-11", "count": 358}, {"year_month": "2023-12", "count": 151}, {"year_month": "2024-01", "count": 246}, {"year_month": "2024-02", "count": 71}, {"year_month": "2024-03", "count": 208}, {"year_month": "2024-04", "count": 281}, {"year_month": "2024-05", "count": 881}, {"year_month": "2024-06", "count": 105}, {"year_month": "2024-07", "count": 514}, {"year_month": "2024-08", "count": 152}, {"year_month": "2024-09", "count": 262}, {"year_month": "2024-10", "count": 298}, {"year_month": "2024-11", "count": 156}, {"year_month": "2024-12", "count": 140}, {"year_month": "2025-01", "count": 154}, {"year_month": "2025-02", "count": 34}, {"year_month": "2025-03", "count": 626}, {"year_month": "2025-04", "count": 528}, {"year_month": "2025-05", "count": 334}, {"year_month": "2025-06", "count": 422}, {"year_month": "2025-07", "count": 840}, {"year_month": "2025-08", "count": 364}, {"year_month": "2025-09", "count": 192}, {"year_month": "2025-10", "count": 224}, {"year_month": "2025-11", "count": 236}, {"year_month": "2025-12", "count": 242}], "monthly_spins": [{"year_month": "2022-12", "count": 16}, {"year_month": "2023-01", "count": 335}, {"year_month": "2023-02", "count": 213}, {"year_month": "2023-03", "count": 334}, {"year_month": "2023-04", "count": 174}, {"year_month": "2023-05", "count": 107}, {"year_month": "2023-06", "count": 75}, {"year_month": "2023-07", "count": 93}, {"year_month": "2023-08", "count": 305}, {"year_month": "2023-09", "count": 576}, {"year_month": "2023-10", "count": 302}, {"year_month": "2023-11", "count": 247}, {"year_month": "2023-12", "count": 93}, {"year_month": "2024-01", "count": 95}, {"year_month": "2024-02", "count": 51}, {"year_month": "2024-03", "count": 129}, {"year_month": "2024-04", "count": 1390}, {"year_month": "2024-05", "count": 3646}, {"year_month": "2024-06", "count": 797}, {"year_month": "2024-07", "count": 1232}, {"year_month": "2024-08", "count": 511}, {"year_month": "2024-09", "count": 265}, {"year_month": "2024-10", "count": 990}, {"year_month": "2024-11", "count": 1279}, {"year_month": "2024-12", "count": 260}, {"year_month": "2025-01", "count": 168}, {"year_month": "2025-02", "count": 118}, {"year_month": "2025-03", "count": 240}, {"year_month": "2025-04", "count": 266}, {"year_month": "2025-05", "count": 248}, {"year_month": "2025-06", "count": 214}, {"year_month": "2025-07", "count": 144}, {"year_month": "2025-08", "count": 140}, {"year_month": "2025-09", "count": 192}, {"year_month": "2025-10", "count": 88}, {"year_month": "2025-11", "count": 184}, {"year_month": "2025-12", "count": 172}], "monthly_spend": [{"year_month": "2016-07", "Money spent on purchase": 14.99}, {"year_month": "2016-09", "Money spent on purchase": 14.99}, {"year_month": "2016-10", "Money spent on purchase": 14.99}, {"year_month": "2017-03", "Money spent on purchase": 1.49}, {"year_month": "2017-04", "Money spent on purchase": 29.98}, {"year_month": "2017-05", "Money spent on purchase": 1.49}, {"year_month": "2017-07", "Money spent on purchase": 14.99}, {"year_month": "2018-03", "Money spent on purchase": 7.49}, {"year_month": "2018-04", "Money spent on purchase": 0.99}, {"year_month": "2018-11", "Money spent on purchase": 8.989999}, {"year_month": "2020-02", "Money spent on purchase": 8.989999}, {"year_month": "2020-05", "Money spent on purchase": 9.979999}, {"year_month": "2020-07", "Money spent on purchase": 1.98}, {"year_month": "2020-08", "Money spent on purchase": 1.98}, {"year_month": "2020-12", "Money spent on purchase": 6.93}, {"year_month": "2021-05", "Money spent on purchase": 2.9699999999999998}, {"year_month": "2021-06", "Money spent on purchase": 1.98}, {"year_month": "2021-11", "Money spent on purchase": 1.98}, {"year_month": "2021-12", "Money spent on purchase": 1.98}, {"year_month": "2022-01", "Money spent on purchase": 0.99}, {"year_month": "2022-02", "Money spent on purchase": 1.98}, {"year_month": "2022-04", "Money spent on purchase": 5.9399999999999995}, {"year_month": "2022-06", "Money spent on purchase": 5.9399999999999995}, {"year_month": "2022-08", "Money spent on purchase": 3.96}, {"year_month": "2022-09", "Money spent on purchase": 4.95}, {"year_month": "2022-12", "Money spent on purchase": 4.95}, {"year_month": "2023-07", "Money spent on purchase": 3.96}, {"year_month": "2023-08", "Money spent on purchase": 8.97}, {"year_month": "2023-09", "Money spent on purchase": 4.95}, {"year_month": "2023-10", "Money spent on purchase": 1.39}, {"year_month": "2023-11", "Money spent on purchase": 2.78}, {"year_month": "2024-02", "Money spent on purchase": 2.78}, {"year_month": "2024-03", "Money spent on purchase": 1.39}, {"year_month": "2024-04", "Money spent on purchase": 20.98}, {"year_month": "2024-05", "Money spent on purchase": 1.39}, {"year_month": "2024-06", "Money spent on purchase": 1.39}, {"year_month": "2024-07", "Money spent on purchase": 6.99}, {"year_month": "2024-11", "Money spent on purchase": 6.99}, {"year_month": "2025-01", "Money spent on purchase": 1.39}, {"year_month": "2025-02", "Money spent on purchase": 5.56}, {"year_month": "2025-06", "Money spent on purchase": 0.99}, {"year_month": "2025-07", "Money spent on purchase": 0.99}], "total_spent": 250.759997, "locations": [{"lat": -41.361007394102565, "lng": 173.2077645496527, "count": 2, "first": "21 Dec 2023", "last": "24 Dec 2023"}, {"lat": -41.28469042313175, "lng": 174.81507811243972, "count": 25, "first": "26 Dec 2023", "last": "27 Dec 2023"}, {"lat": -40.349436862906096, "lng": 175.64348702541423, "count": 1, "first": "29 Dec 2023", "last": "29 Dec 2023"}, {"lat": -37.80820030674066, "lng": 145.00524903928886, "count": 31, "first": "16 Dec 2023", "last": "19 Dec 2023"}, {"lat": -37.778281245529385, "lng": 144.9171411887143, "count": 4, "first": "16 Dec 2023", "last": "19 Dec 2023"}, {"lat": -37.67353558401431, "lng": 144.82912588962236, "count": 2, "first": "19 Dec 2023", "last": "19 Dec 2023"}, {"lat": -37.06633523528448, "lng": 175.06490712368665, "count": 1, "first": "02 Dec 2023", "last": "02 Dec 2023"}, {"lat": -37.062852823483595, "lng": 174.98175400522464, "count": 1, "first": "03 Dec 2023", "last": "03 Dec 2023"}, {"lat": -36.97001826952685, "lng": 174.81507811243972, "count": 6, "first": "15 Dec 2023", "last": "04 Jan 2024"}, {"lat": -36.88423929099092, "lng": 174.81507811243972, "count": 5, "first": "05 Dec 2023", "last": "09 Dec 2023"}, {"lat": -36.88057147729372, "lng": 174.73155625175934, "count": 15, "first": "01 Dec 2023", "last": "20 Dec 2023"}, {"lat": -36.87683937181297, "lng": 174.6479123960339, "count": 6, "first": "05 Dec 2023", "last": "05 Dec 2023"}, {"lat": -36.865254848026, "lng": 174.39625352366352, "count": 2, "first": "08 Dec 2023", "last": "08 Dec 2023"}, {"lat": -36.798360192507495, "lng": 174.81507811243972, "count": 7, "first": "06 Dec 2023", "last": "08 Dec 2023"}, {"lat": -36.79469559694278, "lng": 174.73155625175934, "count": 59, "first": "29 Nov 2023", "last": "01 Jan 2024"}, {"lat": 19.381165686191142, "lng": -99.2342195810541, "count": 2, "first": "23 Mar 2023", "last": "23 Mar 2023"}, {"lat": 19.385653561651186, "lng": -99.14561525951648, "count": 14, "first": "19 Mar 2023", "last": "24 Mar 2023"}, {"lat": 19.479941399093804, "lng": -99.14561525951648, "count": 2, "first": "20 Mar 2023", "last": "20 Mar 2023"}, {"lat": 19.48439940508585, "lng": -99.05710889775952, "count": 19, "first": "19 Mar 2023", "last": "25 Mar 2023"}, {"lat": 30.004208107485084, "lng": -95.35208760396611, "count": 46, "first": "28 Nov 2023", "last": "29 Nov 2023"}, {"lat": 36.05402830444816, "lng": -112.14600217215192, "count": 1, "first": "24 Dec 2024", "last": "24 Dec 2024"}, {"lat": 36.06863194458207, "lng": -112.19071216313328, "count": 1, "first": "24 Dec 2024", "last": "24 Dec 2024"}, {"lat": 36.10973073778371, "lng": -115.14148398179032, "count": 3, "first": "23 Dec 2024", "last": "23 Dec 2024"}, {"lat": 36.13951360282984, "lng": -115.15630722960668, "count": 3, "first": "23 Dec 2024", "last": "23 Dec 2024"}, {"lat": 36.16761539606008, "lng": -115.14444868620676, "count": 1, "first": "30 Dec 2024", "last": "30 Dec 2024"}, {"lat": 36.17137823893192, "lng": -115.1503780128046, "count": 1, "first": "30 Dec 2024", "last": "30 Dec 2024"}, {"lat": 36.17270442364136, "lng": -115.14444868620676, "count": 7, "first": "30 Dec 2024", "last": "30 Dec 2024"}, {"lat": 36.191176564944826, "lng": -115.14148398179032, "count": 9, "first": "30 Dec 2024", "last": "30 Dec 2024"}, {"lat": 36.912743651250736, "lng": -111.45441790445533, "count": 3, "first": "26 Dec 2024", "last": "27 Dec 2024"}, {"lat": 36.956281560096, "lng": -111.42758875868432, "count": 3, "first": "26 Dec 2024", "last": "27 Dec 2024"}, {"lat": 37.127510859302205, "lng": -113.04885412319858, "count": 1, "first": "29 Dec 2024", "last": "29 Dec 2024"}, {"lat": 37.16722399928943, "lng": -113.01609147254398, "count": 1, "first": "29 Dec 2024", "last": "29 Dec 2024"}, {"lat": 38.8776388774748, "lng": -76.96430604071702, "count": 1, "first": "27 Feb 2025", "last": "27 Feb 2025"}, {"lat": 38.88802487034996, "lng": -77.05644636541761, "count": 6, "first": "28 Feb 2025", "last": "02 Mar 2025"}, {"lat": 38.890224043533046, "lng": -77.00750553123798, "count": 1, "first": "27 Feb 2025", "last": "27 Feb 2025"}, {"lat": 38.892818738790965, "lng": -77.03053897822545, "count": 2, "first": "28 Feb 2025", "last": "28 Feb 2025"}, {"lat": 38.89795590138287, "lng": -77.03053897822545, "count": 1, "first": "01 Mar 2025", "last": "01 Mar 2025"}, {"lat": 38.908229004767406, "lng": -77.03053897822545, "count": 3, "first": "28 Feb 2025", "last": "02 Mar 2025"}, {"lat": 39.44429952375224, "lng": -0.4125180839691022, "count": 1, "first": "02 Mar 2024", "last": "02 Mar 2024"}, {"lat": 39.44454132607873, "lng": -0.3371888861706399, "count": 53, "first": "01 Mar 2024", "last": "03 Mar 2024"}, {"lat": 39.5268062247028, "lng": -0.4879915557920095, "count": 1, "first": "04 Mar 2024", "last": "04 Mar 2024"}, {"lat": 40.741704883460265, "lng": -73.88894988465513, "count": 11, "first": "12 Oct 2023", "last": "16 Oct 2023"}, {"lat": 40.75509755935301, "lng": -73.9830029344863, "count": 363, "first": "12 Oct 2023", "last": "07 Jul 2024"}, {"lat": 40.820685004185016, "lng": -73.88894988465513, "count": 55, "first": "06 Jul 2024", "last": "06 Jul 2024"}, {"lat": 40.83408314959125, "lng": -73.9830029344863, "count": 2, "first": "06 Jul 2024", "last": "06 Jul 2024"}, {"lat": 40.89955746283077, "lng": -73.88894988465513, "count": 1, "first": "07 Jul 2024", "last": "07 Jul 2024"}, {"lat": 42.65622030602088, "lng": -73.70070877841377, "count": 2, "first": "04 Jul 2024", "last": "04 Jul 2024"}, {"lat": 43.413469977085605, "lng": -73.70070877841377, "count": 2, "first": "07 Jul 2024", "last": "07 Jul 2024"}, {"lat": 43.672029694818775, "lng": 7.308457061802784, "count": 4, "first": "16 Sep 2025", "last": "18 Sep 2025"}, {"lat": 43.69573460127759, "lng": 7.273378323713735, "count": 1, "first": "18 Sep 2025", "last": "18 Sep 2025"}, {"lat": 43.700502948203344, "lng": 7.273378323713735, "count": 3, "first": "16 Sep 2025", "last": "16 Sep 2025"}, {"lat": 43.7214669270545, "lng": 7.3921795254024225, "count": 1, "first": "17 Sep 2025", "last": "17 Sep 2025"}, {"lat": 43.742730821109774, "lng": 7.394881962557571, "count": 1, "first": "17 Sep 2025", "last": "17 Sep 2025"}, {"lat": 44.19529995853223, "lng": 5.9436130495277615, "count": 9, "first": "11 Sep 2025", "last": "14 Sep 2025"}, {"lat": 44.19975225263353, "lng": 5.948897498500588, "count": 4, "first": "14 Sep 2025", "last": "14 Sep 2025"}, {"lat": 44.200027348691656, "lng": 5.9436130495277615, "count": 51, "first": "14 Sep 2025", "last": "14 Sep 2025"}, {"lat": 44.20725500487988, "lng": 5.940970998135566, "count": 64, "first": "11 Sep 2025", "last": "14 Sep 2025"}, {"lat": 44.60617593845958, "lng": -73.1315318105742, "count": 7, "first": "11 Nov 2023", "last": "12 Nov 2023"}, {"lat": 44.63774507663446, "lng": -63.54046659284262, "count": 29, "first": "30 Aug 2025", "last": "30 Aug 2025"}, {"lat": 44.66287190731423, "lng": -63.64166983400944, "count": 63, "first": "29 Aug 2025", "last": "01 Sep 2025"}, {"lat": 44.66743797187432, "lng": -63.570108321290576, "count": 29, "first": "30 Aug 2025", "last": "30 Aug 2025"}, {"lat": 44.66901037521724, "lng": -63.5764365042776, "count": 63, "first": "29 Aug 2025", "last": "01 Sep 2025"}, {"lat": 44.87955279976068, "lng": -63.55304133538418, "count": 8, "first": "28 Oct 2024", "last": "01 Sep 2025"}, {"lat": 44.88799719305126, "lng": -63.51684589198382, "count": 8, "first": "28 Oct 2024", "last": "01 Sep 2025"}, {"lat": 45.13525741775027, "lng": -72.5916583888346, "count": 10, "first": "14 Sep 2024", "last": "14 Sep 2024"}, {"lat": 45.2054603813009, "lng": -72.54757529118181, "count": 39, "first": "14 Sep 2024", "last": "14 Sep 2024"}, {"lat": 45.40476749030984, "lng": -75.72737036191104, "count": 6, "first": "17 Jan 2025", "last": "17 Jan 2025"}, {"lat": 45.42235772101994, "lng": -75.69593863369383, "count": 7, "first": "17 Jan 2025", "last": "18 Jan 2025"}, {"lat": 45.42696734856669, "lng": -74.02283835030487, "count": 4, "first": "24 Jul 2023", "last": "24 Jul 2023"}, {"lat": 45.42950237525713, "lng": -75.69550700386323, "count": 1, "first": "18 Jan 2025", "last": "18 Jan 2025"}, {"lat": 45.44115102490878, "lng": -73.5885019172296, "count": 31, "first": "12 Aug 2023", "last": "16 Aug 2024"}, {"lat": 45.455596819421565, "lng": -73.68691821631256, "count": 26, "first": "15 May 2024", "last": "15 May 2024"}, {"lat": 45.456551971607006, "lng": -73.74308076084337, "count": 6, "first": "28 Oct 2024", "last": "28 Oct 2024"}, {"lat": 45.457447901681356, "lng": -73.7492276009769, "count": 1, "first": "14 Nov 2024", "last": "14 Nov 2024"}, {"lat": 45.458343448733714, "lng": -73.7553742703054, "count": 11, "first": "28 Mar 2025", "last": "28 Mar 2025"}, {"lat": 45.46994446868904, "lng": -73.78529133624745, "count": 197, "first": "18 Mar 2023", "last": "28 Mar 2025"}, {"lat": 45.50075217371364, "lng": -73.54999758344675, "count": 4, "first": "25 Oct 2024", "last": "25 Oct 2024"}, {"lat": 45.5070226961959, "lng": -73.559698412989, "count": 5, "first": "05 Jan 2025", "last": "05 Jan 2025"}, {"lat": 45.51056465087877, "lng": -73.55090475146591, "count": 1, "first": "06 Jan 2025", "last": "06 Jan 2025"}, {"lat": 45.51147453260342, "lng": -73.55707047570746, "count": 12, "first": "23 Oct 2024", "last": "27 Mar 2025"}, {"lat": 45.51233540152624, "lng": -73.54650695825578, "count": 833, "first": "13 Jan 2023", "last": "27 Mar 2025"}, {"lat": 45.5258337897996, "lng": -73.5888140374418, "count": 3, "first": "05 Jan 2025", "last": "05 Jan 2025"}, {"lat": 45.5268526013498, "lng": -73.64514706344247, "count": 4236, "first": "30 Dec 2022", "last": "28 Mar 2025"}, {"lat": 45.53391811504149, "lng": -73.61085719430667, "count": 1, "first": "21 Feb 2025", "last": "21 Feb 2025"}, {"lat": 45.53482459731127, "lng": -73.6170237301328, "count": 3, "first": "23 Feb 2025", "last": "23 Mar 2025"}, {"lat": 45.5366364056631, "lng": -73.62935630315961, "count": 63, "first": "08 Mar 2025", "last": "08 Mar 2025"}, {"lat": 45.5374669702188, "lng": -73.60206782480378, "count": 1, "first": "05 Jan 2025", "last": "05 Jan 2025"}, {"lat": 45.538374117473, "lng": -73.60823540291892, "count": 2, "first": "05 Mar 2025", "last": "05 Mar 2025"}, {"lat": 45.53844667256925, "lng": -73.64168820994313, "count": 6, "first": "27 Oct 2024", "last": "27 Oct 2024"}, {"lat": 45.53928087919821, "lng": -73.61440281520548, "count": 5, "first": "07 Mar 2025", "last": "07 Mar 2025"}, {"lat": 45.540187255415034, "lng": -73.62057006145187, "count": 9, "first": "05 Oct 2024", "last": "05 Oct 2024"}, {"lat": 45.54109324614412, "lng": -73.62673714144658, "count": 388, "first": "29 Sep 2024", "last": "24 Mar 2025"}, {"lat": 45.54127122440112, "lng": -73.7437443856231, "count": 34, "first": "23 Sep 2023", "last": "23 Sep 2023"}, {"lat": 45.54199885140616, "lng": -73.63290405497811, "count": 2, "first": "05 Oct 2024", "last": "07 Dec 2024"}, {"lat": 45.54471335459757, "lng": -73.65140379467925, "count": 1, "first": "28 Mar 2025", "last": "28 Mar 2025"}, {"lat": 45.545550428992016, "lng": -73.62411732802175, "count": 3, "first": "23 Oct 2024", "last": "05 Mar 2025"}, {"lat": 45.54561741819916, "lng": -73.65757004024364, "count": 3, "first": "28 Mar 2025", "last": "28 Mar 2025"}, {"lat": 45.54652109643776, "lng": -73.66373611828767, "count": 1, "first": "28 Mar 2025", "last": "28 Mar 2025"}, {"lat": 45.550075996115694, "lng": -73.65495461239645, "count": 2, "first": "28 Mar 2025", "last": "28 Mar 2025"}, {"lat": 45.550979953051, "lng": -73.66112156784838, "count": 18, "first": "27 Mar 2025", "last": "28 Mar 2025"}, {"lat": 45.55559135717071, "lng": -73.84229806041017, "count": 5, "first": "23 Sep 2023", "last": "23 Sep 2023"}, {"lat": 45.58360716496921, "lng": -73.50434473894782, "count": 12, "first": "09 Sep 2023", "last": "09 Sep 2023"}, {"lat": 45.612686073938335, "lng": -73.70203153944291, "count": 5, "first": "07 Oct 2023", "last": "07 Oct 2023"}, {"lat": 45.627077099381154, "lng": -73.80081049730688, "count": 80, "first": "23 Sep 2023", "last": "23 Sep 2023"}, {"lat": 45.6841887325773, "lng": -73.66015190939913, "count": 2, "first": "06 Sep 2024", "last": "06 Sep 2024"}, {"lat": 45.727277819960406, "lng": -73.9570346618939, "count": 1, "first": "07 Oct 2023", "last": "07 Oct 2023"}, {"lat": 45.92847634976725, "lng": -73.7328348923255, "count": 1, "first": "06 Sep 2024", "last": "06 Sep 2024"}, {"lat": 45.99985843090949, "lng": -74.23038882372897, "count": 1, "first": "28 Jun 2024", "last": "28 Jun 2024"}, {"lat": 46.01496896214238, "lng": 14.504749008928444, "count": 4, "first": "27 Dec 2025", "last": "27 Dec 2025"}, {"lat": 46.051150261411934, "lng": 14.507089304635691, "count": 4, "first": "27 Dec 2025", "last": "27 Dec 2025"}, {"lat": 46.07220879144904, "lng": -74.18944293314459, "count": 9, "first": "24 Jun 2024", "last": "29 Jun 2024"}, {"lat": 46.13043163283472, "lng": -74.0484489840847, "count": 79, "first": "07 Sep 2024", "last": "08 Sep 2024"}, {"lat": 46.22859854741651, "lng": 14.454190955835308, "count": 20, "first": "27 Dec 2025", "last": "27 Dec 2025"}, {"lat": 46.2597541620384, "lng": 14.420841593821926, "count": 20, "first": "27 Dec 2025", "last": "27 Dec 2025"}, {"lat": 46.363802409137904, "lng": 14.082416597839917, "count": 2, "first": "23 Dec 2025", "last": "23 Dec 2025"}, {"lat": 46.3833954145407, "lng": 14.062701952018196, "count": 2, "first": "23 Dec 2025", "last": "23 Dec 2025"}, {"lat": 46.55988767254793, "lng": 15.642703104848628, "count": 6, "first": "24 Dec 2025", "last": "25 Dec 2025"}, {"lat": 46.565428704998624, "lng": 15.65600672008968, "count": 6, "first": "24 Dec 2025", "last": "25 Dec 2025"}, {"lat": 49.14064427527107, "lng": -2.254690605814296, "count": 12, "first": "28 Jun 2025", "last": "28 Jun 2025"}, {"lat": 49.1423699068562, "lng": -2.164295111884479, "count": 4, "first": "28 Jun 2025", "last": "28 Jun 2025"}, {"lat": 49.17870996995331, "lng": -2.2492162112270995, "count": 12, "first": "28 Jun 2025", "last": "28 Jun 2025"}, {"lat": 49.17947286606694, "lng": -2.20960242122759, "count": 4, "first": "28 Jun 2025", "last": "28 Jun 2025"}, {"lat": 49.183875181180525, "lng": -2.2439556589747047, "count": 12, "first": "28 Jun 2025", "last": "28 Jun 2025"}, {"lat": 49.1897999752477, "lng": -2.1990745314343054, "count": 2, "first": "29 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.190333714911816, "lng": -2.170793509056043, "count": 2, "first": "30 Jun 2025", "last": "30 Jun 2025"}, {"lat": 49.19570731618947, "lng": -2.154216802288272, "count": 2, "first": "29 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.19602161622325, "lng": -2.1372581142258684, "count": 3, "first": "29 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.19622971132726, "lng": -2.125955408170495, "count": 3, "first": "29 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.19643665667624, "lng": -2.1146551720617768, "count": 4, "first": "29 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.20139079334462, "lng": -2.1206835610333576, "count": 1, "first": "29 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.20149415653646, "lng": -2.1150327448485826, "count": 39, "first": "28 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.22152855941182, "lng": -2.261137426013583, "count": 12, "first": "28 Jun 2025", "last": "28 Jun 2025"}, {"lat": 49.22326334843942, "lng": -2.170483969295411, "count": 38, "first": "29 Jun 2025", "last": "30 Jun 2025"}, {"lat": 49.22492424503455, "lng": -2.079988483776384, "count": 44, "first": "28 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.25104349411036, "lng": -2.1754513968288007, "count": 11, "first": "29 Jun 2025", "last": "29 Jun 2025"}, {"lat": 49.25114979869566, "lng": -2.1697849316697457, "count": 15, "first": "29 Jun 2025", "last": "29 Jun 2025"}, {"lat": 50.76468946318852, "lng": 0.2892398969972304, "count": 22, "first": "21 Nov 2024", "last": "23 Nov 2024"}, {"lat": 50.80358591747508, "lng": 0.3212939017548081, "count": 22, "first": "21 Nov 2024", "last": "23 Nov 2024"}, {"lat": 50.8039464074793, "lng": -0.1374305393273204, "count": 1, "first": "07 Mar 2024", "last": "07 Mar 2024"}, {"lat": 50.8039464074793, "lng": 0.1374305393273204, "count": 12, "first": "24 Nov 2024", "last": "24 Nov 2024"}, {"lat": 50.82731260898548, "lng": 0.1633795835923103, "count": 12, "first": "24 Nov 2024", "last": "24 Nov 2024"}, {"lat": 51.02230115074714, "lng": -113.96039768995983, "count": 12, "first": "26 May 2024", "last": "26 May 2024"}, {"lat": 51.05761579381844, "lng": -114.9981033728475, "count": 2, "first": "27 May 2024", "last": "27 May 2024"}, {"lat": 51.07023783557278, "lng": -114.14666582919722, "count": 97, "first": "26 May 2024", "last": "31 May 2024"}, {"lat": 51.07596635012223, "lng": -115.30645197987846, "count": 23, "first": "27 May 2024", "last": "30 May 2024"}, {"lat": 51.09623038859205, "lng": -114.02771014542436, "count": 30, "first": "26 May 2024", "last": "31 May 2024"}, {"lat": 51.13754926856773, "lng": -0.1390760953145018, "count": 5, "first": "22 Dec 2025", "last": "22 Dec 2025"}, {"lat": 51.161020248648086, "lng": -0.1769609873758011, "count": 5, "first": "22 Dec 2025", "last": "22 Dec 2025"}, {"lat": 51.185019331241314, "lng": -114.82928402282997, "count": 10, "first": "30 May 2024", "last": "30 May 2024"}, {"lat": 51.19397847167095, "lng": -115.56769381715674, "count": 1, "first": "28 May 2024", "last": "28 May 2024"}, {"lat": 51.2201810842275, "lng": -0.5134549932034778, "count": 1, "first": "12 Jul 2025", "last": "12 Jul 2025"}, {"lat": 51.238324288745154, "lng": -0.5519572525461695, "count": 1, "first": "12 Jul 2025", "last": "12 Jul 2025"}, {"lat": 51.23871700675068, "lng": -114.59029896775756, "count": 1, "first": "30 May 2024", "last": "30 May 2024"}, {"lat": 51.36468378948278, "lng": -0.4012713348170326, "count": 1, "first": "15 Nov 2025", "last": "15 Nov 2025"}, {"lat": 51.36472337970975, "lng": -0.3895083961768205, "count": 2, "first": "15 Nov 2025", "last": "15 Nov 2025"}, {"lat": 51.36994822178725, "lng": -0.395463730031139, "count": 1, "first": "15 Nov 2025", "last": "15 Nov 2025"}, {"lat": 51.37513236839072, "lng": -0.4131921693639846, "count": 3, "first": "15 Nov 2025", "last": "15 Nov 2025"}, {"lat": 51.37515291963429, "lng": -0.4073067322407656, "count": 1, "first": "15 Nov 2025", "last": "15 Nov 2025"}, {"lat": 51.38821501545687, "lng": -0.4222197759749861, "count": 8, "first": "15 Nov 2025", "last": "15 Nov 2025"}, {"lat": 51.38896431559952, "lng": -0.0467316906740421, "count": 1, "first": "13 Dec 2025", "last": "13 Dec 2025"}, {"lat": 51.399516624741565, "lng": -116.21667144714009, "count": 3, "first": "29 May 2024", "last": "29 May 2024"}, {"lat": 51.402060318411245, "lng": -0.0847745282638482, "count": 1, "first": "13 Dec 2025", "last": "13 Dec 2025"}, {"lat": 51.41376185259296, "lng": -116.53092352620668, "count": 1, "first": "29 May 2024", "last": "29 May 2024"}, {"lat": 51.4387982233958, "lng": -0.0907458570057049, "count": 1, "first": "23 Aug 2025", "last": "23 Aug 2025"}, {"lat": 51.44404412442829, "lng": -0.0966244729894192, "count": 2, "first": "23 Aug 2025", "last": "23 Aug 2025"}, {"lat": 51.449284888819605, "lng": -0.1083700907175349, "count": 13, "first": "09 Sep 2025", "last": "11 Oct 2025"}, {"lat": 51.449290148335834, "lng": -0.1025060110528841, "count": 8, "first": "15 Jun 2025", "last": "30 Nov 2025"}, {"lat": 51.44929511475072, "lng": -0.0966426435017314, "count": 4, "first": "23 Aug 2025", "last": "23 Aug 2025"}, {"lat": 51.45453074006398, "lng": -0.1142563671726229, "count": 51, "first": "06 Jul 2025", "last": "30 Nov 2025"}, {"lat": 51.454536294643695, "lng": -0.1083904724989919, "count": 48, "first": "06 Jul 2025", "last": "30 Nov 2025"}, {"lat": 51.454541555917515, "lng": -0.1025252899482536, "count": 42, "first": "23 Aug 2025", "last": "30 Nov 2025"}, {"lat": 51.454551198973945, "lng": -0.0907970617102783, "count": 2, "first": "09 Nov 2025", "last": "09 Nov 2025"}, {"lat": 51.45455558096984, "lng": -0.084934016270229, "count": 1, "first": "09 Nov 2025", "last": "09 Nov 2025"}, {"lat": 51.4594339029897, "lng": -0.3082875538333722, "count": 1, "first": "17 May 2025", "last": "17 May 2025"}, {"lat": 51.45978256287678, "lng": -0.1142778586311184, "count": 109, "first": "08 May 2025", "last": "28 Dec 2025"}, {"lat": 51.459788119312734, "lng": -0.1084108605965367, "count": 13, "first": "20 Jul 2025", "last": "16 Nov 2025"}, {"lat": 51.465022806942684, "lng": -0.1260376968968956, "count": 1, "first": "19 Nov 2024", "last": "19 Nov 2024"}, {"lat": 51.46502895255959, "lng": -0.1201681707531226, "count": 1, "first": "14 Dec 2025", "last": "14 Dec 2025"}, {"lat": 51.46503480446111, "lng": -0.1142993567504652, "count": 379, "first": "06 May 2025", "last": "28 Dec 2025"}, {"lat": 51.46504036275397, "lng": -0.108431255012971, "count": 23, "first": "20 Jul 2025", "last": "20 Jul 2025"}, {"lat": 51.469435904470885, "lng": -0.4618606564673696, "count": 3, "first": "11 Sep 2025", "last": "11 Sep 2025"}, {"lat": 51.470281610886914, "lng": -0.1201907797144075, "count": 88, "first": "21 Jun 2025", "last": "14 Dec 2025"}, {"lat": 51.470287464744125, "lng": -0.1143208615336188, "count": 76, "first": "24 May 2025", "last": "14 Dec 2025"}, {"lat": 51.47030794417241, "lng": -0.0908483140329772, "count": 1, "first": "18 May 2025", "last": "18 May 2025"}, {"lat": 51.471828055101554, "lng": -0.5180992387856793, "count": 4, "first": "09 Mar 2024", "last": "09 Mar 2024"}, {"lat": 51.4722068794856, "lng": -0.4234914552226716, "count": 3, "first": "11 Sep 2025", "last": "11 Sep 2025"}, {"lat": 51.4725090690892, "lng": -0.3290643623917624, "count": 12, "first": "05 Mar 2024", "last": "17 May 2025"}, {"lat": 51.47273506041468, "lng": -0.234818485061121, "count": 15, "first": "25 Nov 2024", "last": "05 Jul 2025"}, {"lat": 51.472885290247405, "lng": -0.1407543420843136, "count": 1060, "first": "05 Mar 2024", "last": "28 Dec 2025"}, {"lat": 51.472960195634585, "lng": -0.0468724464116274, "count": 49, "first": "06 Apr 2025", "last": "02 Dec 2025"}, {"lat": 51.472960195634585, "lng": 0.0468724464116274, "count": 3, "first": "13 Oct 2025", "last": "13 Oct 2025"}, {"lat": 51.47525100689023, "lng": -0.2848908124067217, "count": 1, "first": "17 May 2025", "last": "17 May 2025"}, {"lat": 51.47554054365296, "lng": -0.1143423729835359, "count": 11, "first": "21 May 2025", "last": "09 Jul 2025"}, {"lat": 51.48079404111465, "lng": -0.1143638911031754, "count": 4, "first": "24 Nov 2024", "last": "24 May 2025"}, {"lat": 51.480799604982174, "lng": -0.1084924762036553, "count": 17, "first": "24 May 2025", "last": "09 Jul 2025"}, {"lat": 51.4860535227833, "lng": -0.1085128959236998, "count": 45, "first": "18 Nov 2024", "last": "10 Oct 2025"}, {"lat": 51.49130785899196, "lng": -0.1085333219766678, "count": 8, "first": "24 May 2025", "last": "24 May 2025"}, {"lat": 51.49131313258648, "lng": -0.1026604096452766, "count": 5, "first": "01 Jul 2025", "last": "13 Nov 2025"}, {"lat": 51.49655704408691, "lng": -0.1144284855100405, "count": 12, "first": "24 May 2025", "last": "24 May 2025"}, {"lat": 51.49656261353504, "lng": -0.1085537543653712, "count": 8, "first": "24 May 2025", "last": "24 May 2025"}, {"lat": 51.496567888892166, "lng": -0.102679736409487, "count": 2, "first": "10 Oct 2025", "last": "21 Oct 2025"}, {"lat": 51.49657287026519, "lng": -0.0968064317666763, "count": 2, "first": "06 Oct 2025", "last": "21 Oct 2025"}, {"lat": 51.50170326693384, "lng": -0.1967865807524139, "count": 1, "first": "25 Nov 2024", "last": "25 Nov 2024"}, {"lat": 51.501812215029766, "lng": -0.1144500303381907, "count": 4, "first": "24 May 2025", "last": "24 May 2025"}, {"lat": 51.50181778633944, "lng": -0.1085741930926233, "count": 12, "first": "24 May 2025", "last": "24 May 2025"}, {"lat": 51.50183273556037, "lng": -0.0909509617864982, "count": 11, "first": "11 Aug 2025", "last": "04 Nov 2025"}, {"lat": 51.5018371307545, "lng": -0.0850779785755436, "count": 4, "first": "11 Aug 2025", "last": "11 Aug 2025"}, {"lat": 51.50185733667177, "lng": 0.0498550738476786, "count": 3, "first": "13 Oct 2025", "last": "13 Oct 2025"}, {"lat": 51.50689437559383, "lng": -0.2321600889146955, "count": 14, "first": "05 Jul 2025", "last": "05 Jul 2025"}, {"lat": 51.507012611593126, "lng": -0.1615128008108263, "count": 3, "first": "13 Apr 2025", "last": "13 Apr 2025"}, {"lat": 51.50704931784888, "lng": -0.1321066924081743, "count": 1, "first": "04 May 2025", "last": "04 May 2025"}, {"lat": 51.5070678041601, "lng": -0.1144715818508827, "count": 35, "first": "27 Apr 2025", "last": "27 Apr 2025"}, {"lat": 51.50707337733196, "lng": -0.1085946381612391, "count": 23, "first": "27 Apr 2025", "last": "27 Apr 2025"}, {"lat": 51.50708364091973, "lng": -0.0968428912733812, "count": 1, "first": "10 Apr 2025", "last": "10 Apr 2025"}, {"lat": 51.50709272821282, "lng": -0.0850939992031702, "count": 27, "first": "06 Apr 2025", "last": "02 Dec 2025"}, {"lat": 51.51195833666935, "lng": -0.3147705469396835, "count": 8, "first": "29 Mar 2025", "last": "29 Mar 2025"}, {"lat": 51.51198933426556, "lng": -0.3029667806680621, "count": 1, "first": "29 Mar 2025", "last": "29 Mar 2025"}, {"lat": 51.51229856526545, "lng": -0.1380124753578375, "count": 1, "first": "08 Nov 2025", "last": "08 Nov 2025"}, {"lat": 51.51231177774916, "lng": -0.1262513812742455, "count": 3, "first": "26 Apr 2025", "last": "26 Apr 2025"}, {"lat": 51.51231794187692, "lng": -0.1203719039927153, "count": 3, "first": "24 May 2025", "last": "24 May 2025"}, {"lat": 51.51234874378832, "lng": -0.0851100248020651, "count": 2, "first": "06 Apr 2025", "last": "06 Apr 2025"}, {"lat": 51.51745086909524, "lng": -0.2086781909590003, "count": 2, "first": "05 Jul 2025", "last": "05 Jul 2025"}, {"lat": 51.51747117930928, "lng": -0.1968977823639194, "count": 2, "first": "05 Jul 2025", "last": "05 Jul 2025"}, {"lat": 51.517499424224255, "lng": -0.1792325086108751, "count": 8, "first": "05 Jul 2025", "last": "05 Jul 2025"}, {"lat": 51.52275624046448, "lng": -0.1792662712111547, "count": 1, "first": "13 Apr 2025", "last": "13 Apr 2025"}, {"lat": 51.52279741513246, "lng": -0.1498328510117082, "count": 1, "first": "18 Aug 2025", "last": "18 Aug 2025"}, {"lat": 51.52284265870568, "lng": -0.1086560114434434, "count": 1, "first": "31 Jul 2025", "last": "31 Jul 2025"}, {"lat": 51.52286613591686, "lng": -0.0792653963670076, "count": 1, "first": "06 Apr 2025", "last": "06 Apr 2025"}, {"lat": 51.52286994878863, "lng": -0.0733894162901129, "count": 4, "first": "06 Apr 2025", "last": "06 Apr 2025"}, {"lat": 51.5280134745893, "lng": -0.1793000442922243, "count": 1, "first": "13 Apr 2025", "last": "13 Apr 2025"}, {"lat": 51.52803907469124, "lng": -0.1616345266548109, "count": 1, "first": "18 Aug 2025", "last": "18 Aug 2025"}, {"lat": 51.52805466302089, "lng": -0.1498610790043307, "count": 1, "first": "18 Aug 2025", "last": "18 Aug 2025"}, {"lat": 51.53334614267906, "lng": -0.1204626348481956, "count": 1, "first": "05 Dec 2025", "last": "05 Dec 2025"}, {"lat": 51.54896518238423, "lng": -0.2266101724521017, "count": 13, "first": "09 Apr 2025", "last": "09 Apr 2025"}, {"lat": 51.54897639728938, "lng": -0.2207108127344489, "count": 3, "first": "09 Apr 2025", "last": "09 Apr 2025"}, {"lat": 51.54918250341528, "lng": -0.0146827656547509, "count": 1, "first": "08 Nov 2025", "last": "08 Nov 2025"}, {"lat": 51.55421296164105, "lng": -0.2325540747690769, "count": 7, "first": "09 Apr 2025", "last": "09 Apr 2025"}, {"lat": 51.554224477614966, "lng": -0.2266528908442517, "count": 11, "first": "09 Apr 2025", "last": "09 Apr 2025"}, {"lat": 51.55683689337748, "lng": -0.2355271322862856, "count": 243, "first": "29 Mar 2025", "last": "05 Jul 2025"}, {"lat": 51.5569879286771, "lng": -0.141179120792748, "count": 18, "first": "11 Apr 2025", "last": "05 Dec 2025"}, {"lat": 51.557063235676715, "lng": -0.0470139020036825, "count": 6, "first": "06 Apr 2025", "last": "08 Nov 2025"}, {"lat": 51.55946085310536, "lng": -0.238500927594771, "count": 6, "first": "01 Apr 2025", "last": "12 Apr 2025"}, {"lat": 51.559472670455406, "lng": -0.2325979189794452, "count": 10, "first": "09 Apr 2025", "last": "16 Apr 2025"}, {"lat": 51.559484190279285, "lng": -0.2266956225078742, "count": 19, "first": "30 Mar 2025", "last": "09 Apr 2025"}, {"lat": 51.559495412684235, "lng": -0.2207940383070984, "count": 16, "first": "30 Mar 2025", "last": "27 Apr 2025"}, {"lat": 51.564732796628256, "lng": -0.2326417768128606, "count": 121, "first": "29 Mar 2025", "last": "03 May 2025"}, {"lat": 51.564744320303454, "lng": -0.226738367448872, "count": 18, "first": "27 Apr 2025", "last": "28 Apr 2025"}, {"lat": 51.56475554646029, "lng": -0.2208356704881646, "count": 12, "first": "30 Mar 2025", "last": "27 Apr 2025"}, {"lat": 51.56484321125153, "lng": -0.167743476918001, "count": 3, "first": "11 Apr 2025", "last": "11 Apr 2025"}, {"lat": 51.57000486761368, "lng": -0.2267811256731518, "count": 3, "first": "28 Apr 2025", "last": "28 Apr 2025"}, {"lat": 52.36011177865138, "lng": 13.508775280471085, "count": 1, "first": "13 Jun 2025", "last": "13 Jun 2025"}, {"lat": 52.3981313404067, "lng": 13.531544394513778, "count": 1, "first": "13 Jun 2025", "last": "13 Jun 2025"}, {"lat": 52.46682727705993, "lng": 13.43033782029872, "count": 3, "first": "19 Oct 2025", "last": "19 Oct 2025"}, {"lat": 52.47878549548543, "lng": 13.420781600311402, "count": 4, "first": "17 Oct 2025", "last": "19 Oct 2025"}, {"lat": 52.493805347072346, "lng": 13.455291891203354, "count": 9, "first": "15 Oct 2025", "last": "19 Oct 2025"}, {"lat": 52.50102012367164, "lng": 13.416292955756187, "count": 1, "first": "15 Oct 2025", "last": "15 Oct 2025"}, {"lat": 52.506223292340394, "lng": 13.465317645162289, "count": 1, "first": "16 Oct 2025", "last": "16 Oct 2025"}, {"lat": 53.48038600536041, "lng": -2.241693027408195, "count": 1, "first": "15 Nov 2024", "last": "15 Nov 2024"}, {"lat": 53.49983633555037, "lng": -2.2137090475891057, "count": 1, "first": "15 Nov 2024", "last": "15 Nov 2024"}, {"lat": 54.96973968043417, "lng": -1.6165614939281412, "count": 1, "first": "07 Dec 2025", "last": "07 Dec 2025"}, {"lat": 54.99518372531909, "lng": -1.566699127231309, "count": 1, "first": "07 Dec 2025", "last": "07 Dec 2025"}, {"lat": 55.93805477139564, "lng": -3.2341432337441054, "count": 34, "first": "17 Nov 2024", "last": "07 Dec 2025"}, {"lat": 55.94104673094255, "lng": -3.117933548574112, "count": 2, "first": "16 Nov 2024", "last": "18 Apr 2025"}, {"lat": 55.94705503412618, "lng": -3.2097136185803365, "count": 1, "first": "17 Nov 2024", "last": "17 Nov 2024"}, {"lat": 55.952990214807286, "lng": -3.1958465541225687, "count": 4, "first": "06 Dec 2025", "last": "06 Dec 2025"}, {"lat": 55.953178267024285, "lng": -3.18857818328457, "count": 20, "first": "06 Dec 2025", "last": "06 Dec 2025"}, {"lat": 55.95835984288223, "lng": -3.20378627239833, "count": 9, "first": "06 Dec 2025", "last": "07 Dec 2025"}, {"lat": 55.9646701299417, "lng": -3.1753729839618154, "count": 1, "first": "18 Apr 2025", "last": "18 Apr 2025"}, {"lat": 55.975975533886185, "lng": -3.1694310183893784, "count": 1, "first": "16 Nov 2024", "last": "16 Nov 2024"}], "total_encounters": 10782, "total_spins": 15689, "pokemon_species_counts": {"Pikachu": 35, "Unown": 15, "Vivillon": 10, "Exeggutor": 8, "Squirtle": 7, "Oricorio": 7, "Applin": 6, "Relicanth": 6, "Vaporeon": 6, "Nihilego": 6, "Cyndaquil": 5, "Jolteon": 5, "Pichu": 5, "Snorlax": 5, "Spinda": 5, "Eevee": 5, "Flabebe": 5, "Slowpoke": 5, "Stufful": 4, "Buzzwole": 4, "Florges": 4, "Wooper": 4, "Necrozma": 4, "Tauros": 4, "Larvesta": 4, "Klefki": 4, "Panpour": 4, "Snivy": 3, "Ponyta": 3, "Samurott": 3}, "unique_species": 771, "encounter_date_first": "30 Dec 2022", "encounter_date_last": "28 Dec 2025", "spend_nzd": [{"year_month": "2016-07", "amount": 14.99}, {"year_month": "2016-09", "amount": 14.99}, {"year_month": "2016-10", "amount": 14.99}, {"year_month": "2017-03", "amount": 1.49}, {"year_month": "2017-04", "amount": 29.98}, {"year_month": "2017-05", "amount": 1.49}, {"year_month": "2017-07", "amount": 14.99}, {"year_month": "2018-03", "amount": 7.49}, {"year_month": "2018-04", "amount": 0.99}, {"year_month": "2018-11", "amount": 8.99}, {"year_month": "2020-02", "amount": 8.99}, {"year_month": "2020-05", "amount": 9.98}, {"year_month": "2020-07", "amount": 1.98}, {"year_month": "2020-08", "amount": 1.98}, {"year_month": "2020-12", "amount": 6.93}, {"year_month": "2021-05", "amount": 2.97}, {"year_month": "2021-06", "amount": 1.98}, {"year_month": "2021-11", "amount": 1.98}, {"year_month": "2021-12", "amount": 1.98}, {"year_month": "2022-01", "amount": 0.99}, {"year_month": "2022-02", "amount": 1.98}, {"year_month": "2022-04", "amount": 5.94}], "spend_cad": [{"year_month": "2022-06", "amount": 5.94}, {"year_month": "2022-08", "amount": 3.96}, {"year_month": "2022-09", "amount": 4.95}, {"year_month": "2022-12", "amount": 4.95}, {"year_month": "2023-07", "amount": 3.96}, {"year_month": "2023-08", "amount": 8.97}, {"year_month": "2023-09", "amount": 4.95}, {"year_month": "2023-10", "amount": 1.39}, {"year_month": "2023-11", "amount": 2.78}, {"year_month": "2024-02", "amount": 2.78}, {"year_month": "2024-03", "amount": 1.39}, {"year_month": "2024-04", "amount": 20.98}, {"year_month": "2024-05", "amount": 1.39}, {"year_month": "2024-06", "amount": 1.39}, {"year_month": "2024-07", "amount": 6.99}, {"year_month": "2024-11", "amount": 6.99}, {"year_month": "2025-01", "amount": 1.39}, {"year_month": "2025-02", "amount": 5.56}], "spend_gbp": [{"year_month": "2025-06", "amount": 0.99}, {"year_month": "2025-07", "amount": 0.99}]};
+
+// TAB SWITCHING
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  const panelId = tab === 'pokemon' ? 'pokemon-panel' : tab === 'spending' ? 'spending-panel' : tab === 'pokedex' ? 'pokedex-panel' : 'activity';
+  document.getElementById(panelId).classList.add('active');
+}
+
+// CHART DEFAULTS
+Chart.defaults.color = '#6a8f8a';
+Chart.defaults.borderColor = '#d4ecd4';
+Chart.defaults.font.family = "'Lato', sans-serif";
+Chart.defaults.font.size = 12;
+
+const YELLOW = '#ffcb05';
+const BLUE = '#1a7a6e';
+const TEAL = '#1a7a6e';
+const PINK = '#cc0000';
+
+// Shared x-axis: union of all encounter + spin months, sorted
+const encByMonth = Object.fromEntries(DATA.monthly_encounters.map(d => [d.year_month, d.count]));
+const spinByMonth = Object.fromEntries(DATA.monthly_spins.map(d => [d.year_month, d.count]));
+const allMonths = [...new Set([
+  ...DATA.monthly_encounters.map(d => d.year_month),
+  ...DATA.monthly_spins.map(d => d.year_month)
+])].sort();
+
+const encValues = allMonths.map(m => encByMonth[m] || 0);
+const spinValues = allMonths.map(m => spinByMonth[m] || 0);
+const encMax = Math.max(...encValues);
+const spinMax = Math.max(...spinValues);
+
+const yearOnlyTicks = {
+  autoSkip: false,
+  maxRotation: 0,
+  callback: (val, i) => {
+    const label = allMonths[i];
+    return label && label.endsWith('-01') ? label.slice(0, 4) : null;
+  },
+};
+
+// ENCOUNTER CHART
+new Chart(document.getElementById('encChart'), {
+  type: 'bar',
+  data: {
+    labels: allMonths,
+    datasets: [{
+      label: 'Encounters',
+      data: encValues,
+      backgroundColor: allMonths.map((m, i) => `rgba(26,122,110,${0.3 + 0.7 * encValues[i] / encMax})`),
+      borderColor: BLUE,
+      borderWidth: 0,
+      borderRadius: 2,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: yearOnlyTicks },
+      y: { grid: { color: '#e0e0e8' } }
+    }
+  }
+});
+
+// SPIN CHART
+new Chart(document.getElementById('spinChart'), {
+  type: 'bar',
+  data: {
+    labels: allMonths,
+    datasets: [{
+      label: 'Spins',
+      data: spinValues,
+      backgroundColor: allMonths.map((m, i) => `rgba(255,203,5,${0.3 + 0.7 * spinValues[i] / spinMax})`),
+      borderColor: YELLOW,
+      borderWidth: 0,
+      borderRadius: 2,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: yearOnlyTicks },
+      y: { grid: { color: '#e0e0e8' } }
+    }
+  }
+});
+
+
+// SPEND CHARTS - shared x-axis from 2016-07 to 2025-07
+const allSpendMonths = [];
+let d = new Date(2016, 6); // Jul 2016
+const end = new Date(2025, 6); // Jul 2025
+while (d <= end) {
+  allSpendMonths.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  d.setMonth(d.getMonth()+1);
+}
+
+function spendChartData(raw) {
+  const byMonth = Object.fromEntries(raw.map(r => [r.year_month, r.amount]));
+  return allSpendMonths.map(m => byMonth[m] || 0);
+}
+
+const spendOpts = (symbol) => ({
+  responsive: true,
+  plugins: { legend: { display: false }, tooltip: {
+    callbacks: { label: ctx => symbol + ctx.parsed.y.toFixed(2) }
+  }},
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: {
+        maxTicksLimit: 20,
+        callback: function(val, index) {
+          const label = allSpendMonths[index];
+          return label && label.endsWith('-01') ? label.slice(0, 4) : '';
+        }
+      }
+    },
+    y: { grid: { color: '#e0e0e8' }, ticks: { callback: v => v ? symbol + v : '' }, beginAtZero: true }
+  }
+});
+
+new Chart(document.getElementById('spendNZD'), {
+  type: 'bar',
+  data: { labels: allSpendMonths, datasets: [{ data: spendChartData(DATA.spend_nzd), backgroundColor: 'rgba(59,76,202,0.6)', borderRadius: 2 }] },
+  options: spendOpts('$')
+});
+
+new Chart(document.getElementById('spendCAD'), {
+  type: 'bar',
+  data: { labels: allSpendMonths, datasets: [{ data: spendChartData(DATA.spend_cad), backgroundColor: 'rgba(59,76,202,0.6)', borderRadius: 2 }] },
+  options: spendOpts('$')
+});
+
+new Chart(document.getElementById('spendGBP'), {
+  type: 'bar',
+  data: { labels: allSpendMonths, datasets: [{ data: spendChartData(DATA.spend_gbp), backgroundColor: 'rgba(59,76,202,0.6)', borderRadius: 2 }] },
+  options: spendOpts('£')
+});
+
+// MAP
+function initMap() {
+  const map = L.map('map', {
+    zoomControl: true,
+  });
+
+  const latlngs = DATA.locations.map(loc => [loc.lat, loc.lng]);
+  map.fitBounds(L.latLngBounds(latlngs), { padding: [24, 24] });
+
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Source: US National Park Service',
+    maxZoom: 8
+  }).addTo(map);
+
+  setTimeout(() => map.invalidateSize(), 100);
+
+  const cluster = L.markerClusterGroup({
+    maxClusterRadius: 40,
+    showCoverageOnHover: false,
+  });
+
+  const locs = DATA.locations;
+  locs.forEach(loc => {
+    const label = loc.first === loc.last
+      ? loc.first
+      : `${loc.first} &ndash; ${loc.last}`;
+    const plural = loc.count === 1 ? 'encounter' : 'encounters';
+    const marker = L.circleMarker([loc.lat, loc.lng], {
+      radius: Math.max(7, Math.min(16, 5 + Math.sqrt(loc.count))),
+      fillColor: '#1a7a6e',
+      color: '#ffffff',
+      fillOpacity: 0.75,
+      weight: 1.5,
+    });
+    marker.bindPopup(`
+      <div style="font-family:'Lato',sans-serif; min-width:140px;">
+        <div style="font-weight:900; font-size:15px; color:var(--text); margin-bottom:4px;">${loc.count} ${plural}</div>
+        <div style="font-size:14px; color:var(--muted);">${label}</div>
+      </div>
+    `, { offset: [0, -4] });
+    marker.on('mouseover', function() { this.setStyle({ fillOpacity: 1 }); });
+    marker.on('mouseout', function() { this.setStyle({ fillOpacity: 0.75 }); });
+    cluster.addLayer(marker);
+  });
+
+  map.addLayer(cluster);
+}
+
+// POKEMON GRID
+const grid = document.getElementById('pokeGrid');
+const pokeCount = document.getElementById('pokeCount');
+let allPokemon = DATA.pokemon_list;
+
+function getPokeNum(name) {
+  const num = (name.charCodeAt(0) * 17 + name.charCodeAt(1 % name.length) * 7) % 898 + 1;
+  return String(num).padStart(3, '0');
+}
+
+function renderPokemon(list) {
+  grid.innerHTML = '';
+  const countEl = document.createElement('div');
+  countEl.className = 'pokemon-count-row';
+  countEl.textContent = `Showing ${list.length} of ${allPokemon.length}`;
+  grid.appendChild(countEl);
+  list.forEach((name, i) => {
+    const card = document.createElement('div');
+    card.className = 'pokemon-card';
+    const num = String(i + 1).padStart(3, '0');
+    card.innerHTML = `
+      <div class="poke-sprite"></div>
+      <div class="poke-name">${name}</div>
+      <div class="poke-num">No. ${num}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+}
+
+function filterPokemon() {
+  const q = document.getElementById('pokeSearch').value.toLowerCase();
+  const filtered = q ? allPokemon.filter(p => p.toLowerCase().includes(q)) : allPokemon;
+  renderPokemon(filtered);
+}
+
+renderPokemon(allPokemon);
+initMap();
+</script>
+  </div><!-- end content-area -->
+</div><!-- end app-container -->
+</body>
+</html>
