@@ -91,10 +91,6 @@
     width: 100%;
   }
 
-  .profile-header-side {
-    width: 100%;
-  }
-
   .profile-stats-grid {
     width: 100%;
   }
@@ -648,21 +644,16 @@
     }
 
     .profile-header {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      align-items: stretch;
       text-align: left;
-      padding-bottom: 0;
+      padding-bottom: 24px;
     }
 
     .profile-header-main {
       display: grid;
       grid-template-columns: auto 1fr;
       grid-template-rows: auto auto;
-      column-gap: 10px;
+      column-gap: 14px;
       align-items: center;
-      align-content: center;
     }
 
     .profile-header-main .logo-badge {
@@ -675,7 +666,6 @@
     .profile-header-main h1 {
       grid-column: 2;
       grid-row: 1;
-      font-size: 20px;
     }
 
     .profile-header-main .profile-sub {
@@ -684,18 +674,11 @@
       margin-top: 0;
     }
 
-    .profile-header-side {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-height: 100%;
-    }
-
     .profile-stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px 10px;
-      flex: 1;
+      gap: 10px 16px;
+      margin-bottom: 12px;
     }
 
     .profile-stats-grid .profile-stat {
@@ -704,27 +687,27 @@
     }
 
     .profile-stats-grid .profile-stat-label {
-      font-size: 12px;
+      font-size: 14px;
       letter-spacing: 0.05em;
       margin-bottom: 1px;
     }
 
     .profile-stats-grid .profile-stat-value {
-      font-size: 18px;
+      font-size: 22px;
     }
 
     .profile-toggle {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: center;
       gap: 6px;
-      align-self: flex-end;
-      margin-top: auto;
+      width: 100%;
+      margin-bottom: 20px;
       padding: 0;
       border: none;
       background: none;
       font-family: 'Lato', sans-serif;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--muted);
       cursor: pointer;
@@ -831,35 +814,35 @@
         <h1 id="stat-username"></h1>
         <div class="profile-sub" id="stat-team"></div>
       </div>
-      <div class="profile-header-side">
-        <div class="profile-stats-grid">
-          <div class="profile-stat">
-            <div class="profile-stat-label">Level</div>
-            <div class="profile-stat-value" id="stat-level"></div>
-          </div>
-          <div class="profile-stat">
-            <div class="profile-stat-label">Pokédex</div>
-            <div class="profile-stat-value">931</div>
-          </div>
-          <div class="profile-stat">
-            <div class="profile-stat-label">Distance walked</div>
-            <div class="profile-stat-value" id="stat-distance"></div>
-          </div>
-          <div class="profile-stat">
-            <div class="profile-stat-label">Encounters</div>
-            <div class="profile-stat-value" id="stat-encounters"></div>
-          </div>
-          <div class="profile-stat">
-            <div class="profile-stat-label">Pokestop spins</div>
-            <div class="profile-stat-value" id="stat-spins"></div>
-          </div>
-        </div>
-        <button type="button" class="profile-toggle" onclick="toggleProfileCard()" aria-expanded="false">
-          <span class="profile-toggle-label">Show</span>
-          <span class="profile-toggle-chevron" aria-hidden="true"></span>
-        </button>
+    </div>
+
+    <div class="profile-stats-grid">
+      <div class="profile-stat">
+        <div class="profile-stat-label">Level</div>
+        <div class="profile-stat-value" id="stat-level"></div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-label">Pokédex</div>
+        <div class="profile-stat-value">931</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-label">Distance walked</div>
+        <div class="profile-stat-value" id="stat-distance"></div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-label">Encounters</div>
+        <div class="profile-stat-value" id="stat-encounters"></div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-label">Pokestop spins</div>
+        <div class="profile-stat-value" id="stat-spins"></div>
       </div>
     </div>
+
+    <button type="button" class="profile-toggle" onclick="toggleProfileCard()" aria-expanded="false">
+      <span class="profile-toggle-label">Show more</span>
+      <span class="profile-toggle-chevron" aria-hidden="true"></span>
+    </button>
 
     <div class="profile-divider"></div>
 
@@ -1002,7 +985,7 @@ function toggleProfileCard() {
   const btn = document.querySelector('.profile-toggle');
   const collapsed = card.classList.toggle('is-collapsed');
   btn.setAttribute('aria-expanded', String(!collapsed));
-  btn.querySelector('.profile-toggle-label').textContent = collapsed ? 'Show' : 'Hide';
+  btn.querySelector('.profile-toggle-label').textContent = collapsed ? 'Show more' : 'Show less';
 }
 
 function showTab(tab) {
