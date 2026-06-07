@@ -463,6 +463,193 @@
     gap: 8px;
   }
 
+  .pokemon-card--clickable {
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .pokemon-card--clickable:hover {
+    box-shadow: var(--shadow-hover);
+  }
+
+  .pokemon-card--clickable:active {
+    transform: scale(0.98);
+  }
+
+  /* POKÉMON BOTTOM SHEET */
+  .poke-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    pointer-events: none;
+    visibility: hidden;
+    transition: visibility 0s linear 0.3s;
+  }
+
+  .poke-sheet.is-open {
+    pointer-events: auto;
+    visibility: visible;
+    transition: visibility 0s linear 0s;
+  }
+
+  .poke-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(26, 58, 46, 0.45);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .poke-sheet.is-open .poke-sheet-backdrop {
+    opacity: 1;
+  }
+
+  .poke-sheet-panel {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 100%;
+    max-width: 400px;
+    max-height: 85vh;
+    background: var(--surface);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 24px rgba(26, 122, 110, 0.15);
+    transform: translateX(-50%) translateY(100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    padding: 20px 24px 32px;
+  }
+
+  .poke-sheet.is-open .poke-sheet-panel {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .poke-sheet-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--surface2);
+    border-radius: 50%;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+  }
+
+  .poke-sheet-close:hover {
+    color: var(--text);
+  }
+
+  .poke-sheet-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding-top: 8px;
+  }
+
+  .poke-sheet-sprite {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+  }
+
+  .poke-sheet-name {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .poke-sheet-num {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .poke-sheet-types {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .type-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .type-badge--electric {
+    color: var(--text);
+  }
+
+  .poke-sheet-genus {
+    font-size: 14px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .poke-sheet-flavor {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 480px;
+    margin-top: 4px;
+  }
+
+  .poke-sheet-error {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .poke-sheet-cry {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface2);
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .poke-sheet-cry-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .poke-sheet-cry:hover:not(:disabled) {
+    background: var(--border);
+  }
+
+  .poke-sheet-cry:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .poke-sheet-loading {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
 
   .xp-bar-block {
     padding: 8px 0 10px;
@@ -1088,6 +1275,26 @@
 
 </div>
 
+<div id="poke-sheet" class="poke-sheet" aria-hidden="true">
+  <div class="poke-sheet-backdrop"></div>
+  <div class="poke-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="poke-sheet-name">
+    <button type="button" class="poke-sheet-close" aria-label="Close">&times;</button>
+    <div class="poke-sheet-body">
+      <img class="poke-sheet-sprite" id="poke-sheet-sprite" alt="">
+      <h2 class="poke-sheet-name" id="poke-sheet-name"></h2>
+      <div class="poke-sheet-num" id="poke-sheet-num"></div>
+      <div class="poke-sheet-types" id="poke-sheet-types"><span class="poke-sheet-loading">Loading…</span></div>
+      <div class="poke-sheet-genus" id="poke-sheet-genus"></div>
+      <p class="poke-sheet-flavor" id="poke-sheet-flavor"></p>
+      <p class="poke-sheet-error" id="poke-sheet-error" hidden></p>
+      <button type="button" class="poke-sheet-cry" id="poke-sheet-cry" disabled>
+        <svg class="poke-sheet-cry-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        Play cry
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 
 // TAB SWITCHING
@@ -1448,6 +1655,10 @@ function renderPokeCard(name) {
     <div class="poke-name">${name}</div>
     ${numLabel ? `<div class="poke-num">${numLabel}</div>` : ''}
   `;
+  if (id) {
+    card.classList.add('pokemon-card--clickable');
+    card.addEventListener('click', () => openPokemonSheet(id, name));
+  }
   return card;
 }
 
@@ -1511,14 +1722,161 @@ function getSpriteById(id) {
   return `${POGO_SPRITE_BASE}/${filename}`;
 }
 
+const TYPE_COLORS = {
+  normal: '#A8A878', fire: '#F08030', water: '#6890F0', electric: '#F8D030',
+  grass: '#78C850', ice: '#98D8D8', fighting: '#C03028', poison: '#A040A0',
+  ground: '#E0C068', flying: '#A890F0', psychic: '#F85888', bug: '#A8B820',
+  rock: '#B8A038', ghost: '#705898', dragon: '#7038F8', dark: '#705848',
+  steel: '#B8B8D0', fairy: '#EE99AC',
+};
+
+const pokeDetailCache = {};
+let currentCryAudio = null;
+
+function typeToDisplay(slug) {
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+
+function renderTypeBadges(types) {
+  return types.map(slug => {
+    const bg = TYPE_COLORS[slug] || '#6a8f8a';
+    return `<span class="type-badge type-badge--${slug}" style="background:${bg}">${typeToDisplay(slug)}</span>`;
+  }).join('');
+}
+
+function getEnglishGenus(species) {
+  const entry = species.genera?.find(g => g.language.name === 'en');
+  return entry?.genus || '';
+}
+
+function getEnglishFlavor(species) {
+  const entries = species.flavor_text_entries?.filter(e => e.language.name === 'en') || [];
+  if (!entries.length) return '';
+  const text = entries[entries.length - 1].flavor_text;
+  return text.replace(/[\n\f]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function fetchPokemonDetails(id) {
+  if (pokeDetailCache[id]) return pokeDetailCache[id];
+  const [pokemonRes, speciesRes] = await Promise.all([
+    fetch(`https://pokeapi.co/api/v2/pokemon/${id}`),
+    fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}`),
+  ]);
+  if (!pokemonRes.ok || !speciesRes.ok) throw new Error('Fetch failed');
+  const pokemon = await pokemonRes.json();
+  const species = await speciesRes.json();
+  const details = {
+    types: pokemon.types.sort((a, b) => a.slot - b.slot).map(t => t.type.name),
+    cry: pokemon.cries?.latest || null,
+    genus: getEnglishGenus(species),
+    flavor: getEnglishFlavor(species),
+  };
+  pokeDetailCache[id] = details;
+  return details;
+}
+
+function lockBodyScroll() {
+  if (document.body.dataset.scrollLocked) return;
+  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+  if (scrollbarWidth > 0) {
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+  }
+  document.body.style.overflow = 'hidden';
+  document.body.dataset.scrollLocked = '1';
+}
+
+function unlockBodyScroll() {
+  if (!document.body.dataset.scrollLocked) return;
+  document.body.style.overflow = '';
+  document.body.style.paddingRight = '';
+  delete document.body.dataset.scrollLocked;
+}
+
+function closePokemonSheet() {
+  const sheet = document.getElementById('poke-sheet');
+  sheet.classList.remove('is-open');
+  sheet.setAttribute('aria-hidden', 'true');
+  unlockBodyScroll();
+  if (currentCryAudio) {
+    currentCryAudio.pause();
+    currentCryAudio = null;
+  }
+}
+
+async function openPokemonSheet(id, name) {
+  const sheet = document.getElementById('poke-sheet');
+  const spriteEl = document.getElementById('poke-sheet-sprite');
+  const nameEl = document.getElementById('poke-sheet-name');
+  const numEl = document.getElementById('poke-sheet-num');
+  const typesEl = document.getElementById('poke-sheet-types');
+  const genusEl = document.getElementById('poke-sheet-genus');
+  const flavorEl = document.getElementById('poke-sheet-flavor');
+  const errorEl = document.getElementById('poke-sheet-error');
+  const cryBtn = document.getElementById('poke-sheet-cry');
+
+  spriteEl.src = getSpriteById(id);
+  spriteEl.alt = name;
+  nameEl.textContent = name;
+  numEl.textContent = `#${String(id).padStart(3, '0')}`;
+  typesEl.innerHTML = '<span class="poke-sheet-loading">Loading…</span>';
+  genusEl.textContent = '';
+  flavorEl.textContent = '';
+  errorEl.hidden = true;
+  errorEl.textContent = '';
+  cryBtn.disabled = true;
+  cryBtn.dataset.cryUrl = '';
+
+  sheet.classList.add('is-open');
+  sheet.setAttribute('aria-hidden', 'false');
+  lockBodyScroll();
+
+  try {
+    const details = await fetchPokemonDetails(id);
+    typesEl.innerHTML = renderTypeBadges(details.types);
+    genusEl.textContent = details.genus;
+    flavorEl.textContent = details.flavor;
+    if (details.cry) {
+      cryBtn.disabled = false;
+      cryBtn.dataset.cryUrl = details.cry;
+    }
+  } catch (e) {
+    typesEl.innerHTML = '';
+    errorEl.hidden = false;
+    errorEl.textContent = 'Could not load details';
+    console.warn('Pokémon detail fetch failed:', e);
+  }
+}
+
+function initPokemonSheet() {
+  const sheet = document.getElementById('poke-sheet');
+  if (!sheet || sheet.dataset.initialized) return;
+  sheet.dataset.initialized = '1';
+  sheet.querySelector('.poke-sheet-backdrop').addEventListener('click', closePokemonSheet);
+  sheet.querySelector('.poke-sheet-close').addEventListener('click', closePokemonSheet);
+  document.getElementById('poke-sheet-cry').addEventListener('click', () => {
+    const url = document.getElementById('poke-sheet-cry').dataset.cryUrl;
+    if (!url) return;
+    if (currentCryAudio) {
+      currentCryAudio.pause();
+      currentCryAudio = null;
+    }
+    currentCryAudio = new Audio(url);
+    currentCryAudio.play().catch(() => {});
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && sheet.classList.contains('is-open')) closePokemonSheet();
+  });
+}
+
 function renderDexCard(entry, caught) {
   const card = document.createElement('div');
-  card.className = 'pokemon-card' + (caught ? '' : ' pokemon-card--uncaught');
+  card.className = 'pokemon-card pokemon-card--clickable' + (caught ? '' : ' pokemon-card--uncaught');
   card.innerHTML = `
     <img class="poke-sprite" src="${getSpriteById(entry.id)}" alt="${entry.display}" loading="lazy" onerror="this.outerHTML='<div class=\\'poke-sprite-unknown\\'>?</div>'">
     <div class="poke-name">${entry.display}</div>
     <div class="poke-num">No. ${String(entry.id).padStart(3, '0')}</div>
   `;
+  card.addEventListener('click', () => openPokemonSheet(entry.id, entry.display));
   return card;
 }
 
@@ -1613,6 +1971,7 @@ async function buildPokeMap() {
   filterPokedex();
 }
 
+initPokemonSheet();
 buildPokeMap();
   initMap();
 } // end initApp
@@ -1627,5 +1986,6 @@ if (window.FIELDBOOK_DATA) {
 </script>
   </div><!-- end content-area -->
 </div><!-- end app-container -->
+
 </body>
 </html>
