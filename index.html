@@ -431,6 +431,33 @@
   }
   .pokemon-search select:focus { border-color: var(--blue); }
 
+  .dex-filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    font-size: 16px;
+  }
+
+  .dex-filter-btn:hover {
+    border-color: var(--blue);
+    color: var(--text);
+  }
+
+  .dex-filter-btn.is-active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+  }
+
   .pokemon-count {
     font-size: 14px;
     color: var(--muted);
@@ -1217,6 +1244,9 @@
       <option value="8">Galar (810–905)</option>
       <option value="9">Paldea (906–1025)</option>
     </select>
+    <button type="button" id="dexUncaughtFilter" class="dex-filter-btn" aria-label="Show only uncaught" aria-pressed="false" title="Show only uncaught" onclick="toggleDexUncaughtFilter()">
+      <i class="fa-solid fa-circle-question"></i>
+    </button>
   </div>
   <div id="dexGrid"></div>
 </div>
@@ -1880,9 +1910,21 @@ function renderDexCard(entry, caught) {
   return card;
 }
 
+window.toggleDexUncaughtFilter = function toggleDexUncaughtFilter() {
+  const btn = document.getElementById('dexUncaughtFilter');
+  const active = btn.getAttribute('aria-pressed') === 'true';
+  const next = !active;
+  btn.setAttribute('aria-pressed', String(next));
+  btn.classList.toggle('is-active', next);
+  btn.setAttribute('aria-label', next ? 'Show all Pokémon' : 'Show only uncaught');
+  btn.title = next ? 'Show all Pokémon' : 'Show only uncaught';
+  filterPokedex();
+};
+
 window.filterPokedex = function filterPokedex() {
   const q = document.getElementById('dexSearch').value.toLowerCase();
   const genVal = document.getElementById('dexGenFilter').value;
+  const uncaughtOnly = document.getElementById('dexUncaughtFilter').getAttribute('aria-pressed') === 'true';
   const container = document.getElementById('dexGrid');
   container.innerHTML = '';
 
@@ -1894,28 +1936,34 @@ window.filterPokedex = function filterPokedex() {
   // Determine which gens to show
   const activeGens = genVal === 'all' ? GENS : GENS.filter((_, i) => String(i + 1) === genVal);
 
-  // Flatten to entries within selected gen(s), then apply search
+  // Flatten to entries within selected gen(s), then apply search and uncaught filter
   const genFiltered = standardDex.filter(p => activeGens.some(g => p.id >= g.min && p.id <= g.max));
-  const filtered = q ? genFiltered.filter(p => p.display.toLowerCase().includes(q)) : genFiltered;
+  let filtered = q ? genFiltered.filter(p => p.display.toLowerCase().includes(q)) : genFiltered;
+  if (uncaughtOnly) filtered = filtered.filter(p => !isCaught(p.id));
 
   // Single-gen or search: flat grid with a header showing caught count
   if (genVal !== 'all' || q) {
-    const caughtCount = filtered.filter(p => isCaught(p.id)).length;
+    const pool = q ? genFiltered : standardDex.filter(p => activeGens.some(g => p.id >= g.min && p.id <= g.max));
+    const caughtCount = pool.filter(p => isCaught(p.id)).length;
     if (genVal !== 'all' && !q) {
       const gen = GENS[parseInt(genVal, 10) - 1];
       const header = document.createElement('div');
       header.className = 'pokedex-gen-header';
       header.innerHTML = `
         <span class="pokedex-gen-name">${gen.name}</span>
-        <span class="pokedex-gen-count">${caughtCount} / ${filtered.length} caught</span>
+        <span class="pokedex-gen-count">${uncaughtOnly ? `${filtered.length} uncaught` : `${caughtCount} / ${pool.length} caught`}</span>
       `;
       container.appendChild(header);
     } else {
       const countEl = document.createElement('div');
       countEl.className = 'pokemon-count-row';
-      countEl.textContent = q
-        ? `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`
-        : `${caughtCount} / ${filtered.length} caught`;
+      if (q) {
+        countEl.textContent = `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
+      } else if (uncaughtOnly) {
+        countEl.textContent = `${filtered.length} uncaught`;
+      } else {
+        countEl.textContent = `${caughtCount} / ${pool.length} caught`;
+      }
       container.appendChild(countEl);
     }
     const flatGrid = document.createElement('div');
@@ -1927,15 +1975,16 @@ window.filterPokedex = function filterPokedex() {
 
   // All gens: grouped view with per-gen headers
   GENS.forEach(gen => {
-    const genEntries = standardDex.filter(p => p.id >= gen.min && p.id <= gen.max);
+    const fullGen = standardDex.filter(p => p.id >= gen.min && p.id <= gen.max);
+    let genEntries = uncaughtOnly ? fullGen.filter(p => !isCaught(p.id)) : fullGen;
     if (genEntries.length === 0) return;
-    const caughtCount = genEntries.filter(p => isCaught(p.id)).length;
+    const caughtCount = fullGen.filter(p => isCaught(p.id)).length;
 
     const header = document.createElement('div');
     header.className = 'pokedex-gen-header';
     header.innerHTML = `
       <span class="pokedex-gen-name">${gen.name}</span>
-      <span class="pokedex-gen-count">${caughtCount} / ${genEntries.length} caught</span>
+      <span class="pokedex-gen-count">${uncaughtOnly ? `${genEntries.length} uncaught` : `${caughtCount} / ${fullGen.length} caught`}</span>
     `;
     container.appendChild(header);
 
