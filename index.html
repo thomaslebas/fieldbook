@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TULB / Pokemon Go Archive</title>
+<title>Pokémon Go Fieldbook — Tulb</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -517,7 +517,7 @@
     transform: translateX(-50%) translateY(100%);
     transition: transform 0.3s ease;
     overflow-y: auto;
-    padding: 20px 24px 32px;
+    padding: 20px 24px 64px;
   }
 
   .poke-sheet.is-open .poke-sheet-panel {
@@ -1336,7 +1336,7 @@ function populateFromData(DATA) {
   const teamColours = { Valor: '#cc0000', Mystic: '#005aff', Instinct: '#ffcb05' };
 
   // Page title
-  document.title = a.username + ' / Pokémon GO Archive';
+  document.title = `Pokémon Go Fieldbook — ${a.username}`;
 
   // Profile sidebar
   document.getElementById('stat-username').textContent = a.username;
