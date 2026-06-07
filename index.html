@@ -646,8 +646,7 @@
     }
 
     nav {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      flex-wrap: wrap;
     }
   }
 
@@ -748,8 +747,8 @@
 
   <!-- NAV TABS -->
   <nav>
-    <button class="tab active" onclick="showTab('activity')">Activity</button>
-    <button class="tab" onclick="showTab('pokedex')">Pokédex</button>
+    <button class="tab active" onclick="showTab('pokedex')">Pokédex</button>
+    <button class="tab" onclick="showTab('activity')">Activity</button>
     <button class="tab" onclick="showTab('pokemon')" style="display:none">Collection</button>
     <button class="tab" onclick="showTab('spending')">Spending</button>
   </nav>
@@ -758,7 +757,7 @@
   <div class="content-area">
 
 <!-- ACTIVITY -->
-<div id="activity" class="panel active">
+<div id="activity" class="panel">
   <div class="chart-card" style="margin-bottom:20px; padding-bottom:0;">
     <div class="chart-title">Where I've played</div>
     <div id="map" style="margin: 0 -24px;"></div>
@@ -791,7 +790,7 @@
 </div>
 
 <!-- POKEDEX -->
-<div id="pokedex-panel" class="panel">
+<div id="pokedex-panel" class="panel active">
   <div class="pokemon-search">
     <input type="text" id="dexSearch" placeholder="Search Pokédex..." oninput="filterPokedex()">
     <select id="dexGenFilter" onchange="filterPokedex()">
@@ -1297,7 +1296,7 @@ window.filterPokedex = function filterPokedex() {
   container.innerHTML = '';
 
   const dex = window.POKEDEX_DATA || {};
-  const isCaught = slug => dex[slug]?.caught === true;
+  const isCaught = id => dex[id]?.caught === true;
 
   const standardDex = allDex.filter(p => p.id >= 1 && p.id <= 1025);
 
@@ -1310,7 +1309,7 @@ window.filterPokedex = function filterPokedex() {
 
   // Single-gen or search: flat grid with a header showing caught count
   if (genVal !== 'all' || q) {
-    const caughtCount = filtered.filter(p => isCaught(p.slug)).length;
+    const caughtCount = filtered.filter(p => isCaught(p.id)).length;
     if (genVal !== 'all' && !q) {
       const gen = GENS[parseInt(genVal, 10) - 1];
       const header = document.createElement('div');
@@ -1330,7 +1329,7 @@ window.filterPokedex = function filterPokedex() {
     }
     const flatGrid = document.createElement('div');
     flatGrid.className = 'pokemon-grid';
-    filtered.forEach(p => flatGrid.appendChild(renderDexCard(p, isCaught(p.slug))));
+    filtered.forEach(p => flatGrid.appendChild(renderDexCard(p, isCaught(p.id))));
     container.appendChild(flatGrid);
     return;
   }
@@ -1339,7 +1338,7 @@ window.filterPokedex = function filterPokedex() {
   GENS.forEach(gen => {
     const genEntries = standardDex.filter(p => p.id >= gen.min && p.id <= gen.max);
     if (genEntries.length === 0) return;
-    const caughtCount = genEntries.filter(p => isCaught(p.slug)).length;
+    const caughtCount = genEntries.filter(p => isCaught(p.id)).length;
 
     const header = document.createElement('div');
     header.className = 'pokedex-gen-header';
@@ -1351,7 +1350,7 @@ window.filterPokedex = function filterPokedex() {
 
     const subGrid = document.createElement('div');
     subGrid.className = 'pokemon-grid';
-    genEntries.forEach(p => subGrid.appendChild(renderDexCard(p, isCaught(p.slug))));
+    genEntries.forEach(p => subGrid.appendChild(renderDexCard(p, isCaught(p.id))));
     container.appendChild(subGrid);
   });
 };
