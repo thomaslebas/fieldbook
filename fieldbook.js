@@ -12,6 +12,8 @@ window.FIELDBOOK_DATA = {
     "pokecoins": 420,
     "stardust": 2410210,
     "distance_km": 13723.975586,
+    "pokemon_caught": 25001,
+    "pokestops_visited": 28735,
     "buddy": {
       "name": "Rolycoly",
       "internal_id": "V0837_POKEMON_ROLYCOLY"

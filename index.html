@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <script src="fieldbook.js"></script>
 <script src="pokedex.js"></script>
+<script src="obtain_methods.js"></script>
 <style>
   :root {
     --bg: #e8f5e9;
@@ -647,6 +648,70 @@
     color: var(--muted);
   }
 
+  .poke-sheet-obtain {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .poke-sheet-obtain-label {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    align-self: center;
+  }
+
+  .poke-sheet-obtain-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .obtain-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* Wild → green */
+  .obtain-badge--wild    { background: #d4f4e2; color: #1a6b3a; }
+  /* Eggs → amber */
+  .obtain-badge--eggs    { background: #fff3cd; color: #7a5800; }
+  /* Raids → purple */
+  .obtain-badge--raids   { background: #ede6ff; color: #5a2d9c; }
+  /* Research → blue */
+  .obtain-badge--research { background: #dbeafe; color: #1e40af; }
+  /* Evolution → grey */
+  .obtain-badge--evolution { background: #f0f0f0; color: #444; }
+  /* Rocket → dark red */
+  .obtain-badge--rocket  { background: #fee2e2; color: #991b1b; }
+  /* Seasonal / unavailable → muted */
+  .obtain-badge--seasonal    { background: #fce7f3; color: #9d174d; }
+  .obtain-badge--unavailable { background: #f3f4f6; color: #6b7280; }
+
+  .poke-sheet-obtain-notes {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+    text-align: center;
+    align-self: stretch;
+  }
+
   .poke-sheet-cry {
     display: inline-flex;
     align-items: center;
@@ -1119,19 +1184,6 @@
     opacity: 0.35;
   }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .panel.active > * {
-    animation: fadeUp 0.35s ease both;
-  }
-
-  .panel.active > *:nth-child(2) { animation-delay: 0.05s; }
-  .panel.active > *:nth-child(3) { animation-delay: 0.1s; }
-  .panel.active > *:nth-child(4) { animation-delay: 0.15s; }
-
 </style>
 </head>
 <body>
@@ -1168,12 +1220,12 @@
         <div class="profile-stat-value" id="stat-distance"></div>
       </div>
       <div class="profile-stat">
-        <div class="profile-stat-label">Encounters</div>
-        <div class="profile-stat-value" id="stat-encounters"></div>
+        <div class="profile-stat-label">Pokémon caught</div>
+        <div class="profile-stat-value" id="stat-pokemon-caught"></div>
       </div>
       <div class="profile-stat">
-        <div class="profile-stat-label">Pokestop spins</div>
-        <div class="profile-stat-value" id="stat-spins"></div>
+        <div class="profile-stat-label">Pokéstops visited</div>
+        <div class="profile-stat-value" id="stat-pokestops-visited"></div>
       </div>
       <div class="profile-stat">
         <div class="profile-stat-label">Started</div>
@@ -1227,11 +1279,11 @@
   <div class="chart-grid">
     <div class="chart-card full">
       <div class="chart-title">Pok&eacute;mon Encountered</div>
-      <canvas id="encChart" height="200"></canvas>
+      <canvas id="encChart" height="100"></canvas>
     </div>
     <div class="chart-card full">
       <div class="chart-title">Pok&eacute;stop Spins</div>
-      <canvas id="spinChart" height="200"></canvas>
+      <canvas id="spinChart" height="100"></canvas>
     </div>
   </div>
 </div>
@@ -1338,6 +1390,11 @@
       <div class="poke-sheet-types" id="poke-sheet-types"><span class="poke-sheet-loading">Loading…</span></div>
       <div class="poke-sheet-genus" id="poke-sheet-genus"></div>
       <p class="poke-sheet-flavor" id="poke-sheet-flavor"></p>
+      <div class="poke-sheet-obtain" id="poke-sheet-obtain" hidden>
+        <div class="poke-sheet-obtain-label">How to obtain</div>
+        <div class="poke-sheet-obtain-badges" id="poke-sheet-obtain-badges"></div>
+        <p class="poke-sheet-obtain-notes" id="poke-sheet-obtain-notes" hidden></p>
+      </div>
       <p class="poke-sheet-error" id="poke-sheet-error" hidden></p>
       <button type="button" class="poke-sheet-cry" id="poke-sheet-cry" disabled>
         <svg class="poke-sheet-cry-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -1358,12 +1415,17 @@ function toggleProfileCard() {
   btn.querySelector('.profile-toggle-label').textContent = collapsed ? 'Show more' : 'Show less';
 }
 
+let ensureActivityMap = null;
+
 function showTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   event.target.classList.add('active');
   const panelId = tab === 'pokemon' ? 'pokemon-panel' : tab === 'spending' ? 'spending-panel' : tab === 'pokedex' ? 'pokedex-panel' : 'activity';
   document.getElementById(panelId).classList.add('active');
+  if (tab === 'activity' && ensureActivityMap) {
+    requestAnimationFrame(() => ensureActivityMap());
+  }
 }
 
 // CHART DEFAULTS
@@ -1371,6 +1433,7 @@ Chart.defaults.color = '#6a8f8a';
 Chart.defaults.borderColor = '#d4ecd4';
 Chart.defaults.font.family = "'Lato', sans-serif";
 Chart.defaults.font.size = 12;
+Chart.defaults.animation = false;
 
 const YELLOW = '#ffcb05';
 const BLUE = '#1a7a6e';
@@ -1397,8 +1460,8 @@ function populateFromData(DATA) {
   teamEl.style.color = teamColours[a.team] || 'inherit';
   document.getElementById('stat-level').textContent = a.level;
   document.getElementById('stat-distance').textContent = fmtDec(a.distance_km, 0) + ' km';
-  document.getElementById('stat-encounters').textContent = fmt(act.encounters.total);
-  document.getElementById('stat-spins').textContent = fmt(act.pokestop_spins.total);
+  document.getElementById('stat-pokemon-caught').textContent = fmt(a.pokemon_caught);
+  document.getElementById('stat-pokestops-visited').textContent = fmt(a.pokestops_visited);
 
   // Niantic exports start_date as MM/DD/YYYY — e.g. "07/06/2016" → "6 Jul 2016"
   const [mo, d, y] = a.start_date.split('/');
@@ -1552,13 +1615,24 @@ new Chart(document.getElementById('spendGBP'), {
   options: spendOpts('£')
 });
 
-// MAP
+// MAP — lazy-init when Activity tab is visible (Leaflet breaks in display:none panels)
+let activityMap = null;
+
 function initMap() {
+  if (activityMap) {
+    activityMap.invalidateSize();
+    return;
+  }
+
+  const locs = DATA.activity.encounters.locations;
+  if (!locs.length) return;
+
   const map = L.map('map', {
     zoomControl: true,
   });
+  activityMap = map;
 
-  const latlngs = DATA.activity.encounters.locations.map(loc => [loc.lat, loc.lng]);
+  const latlngs = locs.map(loc => [loc.lat, loc.lng]);
   map.fitBounds(L.latLngBounds(latlngs), { padding: [24, 24] });
 
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -1566,14 +1640,11 @@ function initMap() {
     maxZoom: 8
   }).addTo(map);
 
-  setTimeout(() => map.invalidateSize(), 100);
-
   const cluster = L.markerClusterGroup({
     maxClusterRadius: 40,
     showCoverageOnHover: false,
   });
 
-  const locs = DATA.activity.encounters.locations;
   locs.forEach(loc => {
     const label = loc.first === loc.last
       ? loc.first
@@ -1599,6 +1670,8 @@ function initMap() {
 
   map.addLayer(cluster);
 }
+
+ensureActivityMap = initMap;
 
 // POKEMON GRID
 const grid = document.getElementById('pokeGrid');
@@ -1783,6 +1856,39 @@ const TYPE_COLORS = {
 };
 
 const pokeDetailCache = {};
+
+const METHOD_LABELS = {
+  'wild':        'Wild',
+  'eggs-2km':    '2km Egg',
+  'eggs-5km':    '5km Egg',
+  'eggs-7km':    '7km Egg',
+  'eggs-10km':   '10km Egg',
+  'eggs-12km':   '12km Egg',
+  'raids-1':     'Tier 1 Raid',
+  'raids-2':     'Tier 2 Raid',
+  'raids-3':     'Tier 3 Raid',
+  'raids-4':     'Tier 4 Raid',
+  'raids-5':     'Tier 5 Raid',
+  'raids-mega':  'Mega Raid',
+  'research':    'Research',
+  'evolution':   'Evolution only',
+  'rocket':      'Team Rocket',
+  'seasonal':    'Seasonal event',
+  'unavailable': 'Not in GO yet',
+};
+
+function formatObtainNote(text) {
+  if (!text) return '';
+  return text
+    .replace(/\s&\s/g, ' and ')
+    .split(' · ')
+    .map(part => {
+      if (/pokémon go/i.test(part)) return 'Not yet available in Pokémon GO';
+      if (!part) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join(' · ');
+}
 let currentCryAudio = null;
 
 function typeToDisplay(slug) {
@@ -1877,6 +1983,22 @@ async function openPokemonSheet(id, name) {
   errorEl.textContent = '';
   cryBtn.disabled = true;
   cryBtn.dataset.cryUrl = '';
+
+  // Obtain methods (synchronous — from local obtain_methods.js)
+  const obtainEl  = document.getElementById('poke-sheet-obtain');
+  const badgesEl  = document.getElementById('poke-sheet-obtain-badges');
+  const notesEl   = document.getElementById('poke-sheet-obtain-notes');
+  const obtainEntry = window.OBTAIN_DATA?.[id];
+  if (obtainEntry && obtainEntry.methods.length) {
+    badgesEl.innerHTML = obtainEntry.methods
+      .map(m => `<span class="obtain-badge obtain-badge--${m.split('-')[0]}" data-method="${m}">${METHOD_LABELS[m] ?? m}</span>`)
+      .join('');
+    notesEl.textContent = formatObtainNote(obtainEntry.notes);
+    notesEl.hidden = !obtainEntry.notes;
+    obtainEl.hidden = false;
+  } else {
+    obtainEl.hidden = true;
+  }
 
   sheet.classList.add('is-open');
   sheet.setAttribute('aria-hidden', 'false');
@@ -2044,7 +2166,6 @@ async function buildPokeMap() {
 
 initPokemonSheet();
 buildPokeMap();
-  initMap();
 } // end initApp
 
 // Initialise once fieldbook.js has assigned window.FIELDBOOK_DATA
